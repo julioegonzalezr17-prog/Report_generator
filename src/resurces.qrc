@@ -1,0 +1,10 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>iconos/info_icon.png</file>
+    <file>iconos/monitoring.png</file>
+    <file>iconos/app_imag.ico</file>
+    <file>iconos/Ariston_logo.png</file>
+    <file>iconos/check.png</file>
+    <file>iconos/multiply.png</file>
+</qresource>
+</RCC>

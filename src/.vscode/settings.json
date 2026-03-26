@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": ["."],
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "python.analysis.typeCheckingMode": "standard"
+}
