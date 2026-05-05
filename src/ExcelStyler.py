@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, PatternFill, Font, Alignment, Side
 from openpyxl.formatting.rule import CellIsRule
 import pandas as pd
-from dictDataIntegration import error_list_LIN
+from dictDataIntegration import error_list_LIN, status_TDM
 import logging
 
 logger = logging.getLogger(__name__)
@@ -230,16 +230,50 @@ class ExcelStyler:
         
         fault_names = []
         for r in range(self.start_row + 1, self.ws.max_row + 1):
-            fault_codes = str(self.ws.cell(row=r, column=col).value)
-            if fault_codes is None:
+            raw_value = self.ws.cell(row=r, column=col).value
+            if raw_value is None:
                 fault_names.append(None)
                 continue
+            try:
+                fault_codes = int(raw_value)                
+            except (TypeError, ValueError):
+                fault_names.append("Invalid fault code format")
+                continue
+
             if fault_codes in error_list_LIN:
                 fault_names.append(error_list_LIN[fault_codes]["Name"] + "->" + error_list_LIN[fault_codes]["error_type"])
             else:
                 fault_names.append("Code Fault not found in Pump datasheet")   
         logger.info("populate_lin_fault OUTPUT: OK")     
         return fault_names
+
+    def populate_tdm_status(self)->list:
+        """
+        Populate a new column with given values. 
+        This is a custom method that looks up status codes in the status_TDM dictionary and fills the corresponding status names.
+        """
+        logger.info("populate_tdm_status working...")
+        header = "TDM_STATUS"
+        col = self.cell_letter_to_number(self.find_header_column(header))
+        
+        status_names = []
+        for r in range(self.start_row + 1, self.ws.max_row + 1):
+            raw_value = self.ws.cell(row=r, column=col).value
+            if raw_value is None:
+                status_names.append(None)
+                continue
+            try:
+                status_codes = int(raw_value)                
+            except (TypeError, ValueError):
+                status_names.append("Invalid status code format")
+                continue
+
+            if status_codes in status_TDM:
+                status_names.append(status_TDM[status_codes])
+            else:
+                status_names.append("Status code not found in TDM")   
+        logger.info("populate_tdm_status OUTPUT: OK")     
+        return status_names
 
     # --------------------------------------------------------------
     # Populate a new column 

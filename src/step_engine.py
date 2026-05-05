@@ -263,9 +263,18 @@ class StepEngine:
             # -----------------------------     
             elif action == "insert_current_colmun":
                 column = step["column"]
-                self.styler.insert_current_colmun(column)          
+                self.styler.insert_current_colmun(column)  
             # -----------------------------
-            # 15. Custom error if unsupported action
+            # 15. Fill fault names based on fault codes using tdm dictionary
+            #     This is a custom action that populates a new column "TDM_Fault_Name"
+            # -----------------------------
+            elif action == "populate_tdm_status":
+                header = step["column"]
+                code_names = self.styler.populate_tdm_status()
+                self.styler.populate_column(header, code_names)   
+            # -----------------------------    
+            # -----------------------------
+            # 16. Custom error if unsupported action
             # -----------------------------
             else:
                 logger.warning("Unsupported action in JSON: %s", action)

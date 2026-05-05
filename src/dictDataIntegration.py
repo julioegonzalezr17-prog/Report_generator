@@ -40,83 +40,113 @@ header_default_table = {
                         }
 time_data_set = ["Absolute time", "Relative Time"]
 
-error_list_LIN = { "0":{
+error_list_LIN = { 0:{
                         "Name": "NO error",
                         "error_type": "Status"
                         },                    
-                    "1":{
+                    1:{
                         "Name": "Driver fault",
                         "error_type": "Final error"
                         },
-                    "2":{
+                    2:{
                         "Name": "Over current",
                         "error_type": "Error"
                         },
-                    "3":{
+                    3:{
                         "Name": "Blocked rotor",
                         "error_type": "Final error"
                         },  
-                    "5":{
+                    5:{
                         "Name": "Overload motor",
                         "error_type": "Error"
                         },
-                    "6":{
+                    6:{
                         "Name": "Overvoltage",
                         "error_type": "Error"
                         },
-                    "7":{
+                    7:{
                         "Name": "Undervoltage fast drop",
                         "error_type": "Error"
                         },
-                    "8":{
+                    8:{
                         "Name": "Over speed",
                         "error_type": "Error"
                         },  
-                    "9":{
+                    9:{
                         "Name": "Turbine mode",
                         "error_type": "Error"
                         },
-                    "10":{
+                    10:{
                         "Name": "Undervoltage slow drop",
                         "error_type": "Error"
                         },
-                    "12":{
+                    12:{
                         "Name": "Over temperature motor",
                         "error_type": "Error"
                         },
-                    "14":{
+                    14:{
                         "Name": "Over temperature module",
                         "error_type": "Error"
                         },  
-                    "15":{
+                    15:{
                         "Name": "Over temperature power bridge",
                         "error_type": "Error"
                         },
-                    "16":{
+                    16:{
                         "Name": "Generator operation",
                         "error_type": "Warning"
                         },
-                    "17":{
+                    17:{
                         "Name": "Dry running",
                         "error_type": "Warning"
                         },
-                    "18":{
+                    18:{
                         "Name": "Overload motor",
                         "error_type": "Warning"
                         },
-                    "19":{
+                    19:{
                         "Name": "Over temperature module",
                         "error_type": "Warning"
                         },
-                    "20":{
+                    20:{
                         "Name": "Blocked rotor",
                         "error_type": "Warning"
                         },
-                    "21":{
+                    21:{
                         "Name": "Medium temperature sensor",
                         "error_type": "Warning"
                         }
                 }
+
+status_TDM = {
+                1: "ODU is in Stand-by",
+                11: "Waiting to start generator in heating",
+                12: "EXV reset state heating",
+                13: "EXV Init state heating",
+                14: "startup heating",
+                15: "Modulation heating",
+                16: "Modulation Booster heating",
+                17: "Rating heating",
+                18: "Defrost",
+                19: "Hard stop",
+                21: "Waiting to start generator in cooling",
+                22: "EXV reset state cooling",
+                23: "EXV Init state cooling",
+                24: "startup cooling",
+                25: "Modulation cooling",
+                26: "Modulation Booster cooling",
+                27: "Rating cooling",
+                28: "Pump Down (not implement in TDM4)",
+                32: "Generator switching off procedure - heating",
+                33: "Generator switching off procedure - cooling",
+                40: "Defrost manual",
+                51: "fault state",
+                52: "hard fault state",
+                101: "TDM4 is initializing the ODU",
+                150: "the OTA is completed and the TDM4 is preparing the ODU before lunching the upgrading",
+                253: "PC Control",
+                254: "Setup Mode"
+            }
 
 DEFAULT_TEST_STEPS_PACMAN5 = {1: [{ 
                                     "action": "highlight_column",
@@ -137,6 +167,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "validate_version",
@@ -195,6 +234,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -246,6 +294,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -294,6 +351,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -346,6 +412,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -392,6 +467,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -436,6 +520,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -482,6 +575,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "insert_current_colmun",
@@ -537,6 +639,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "insert_temp_colmun",
@@ -598,6 +709,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -629,7 +749,6 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "column": "INVERTER_REG_RD_INPUTVOLT_AVG",
                                     "color": "00FF00"
                                 }
-
                             ],
                             11: [{  
                                     "action": "highlight_column",
@@ -649,6 +768,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -701,6 +829,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -746,6 +883,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -797,6 +943,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -847,6 +1002,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -895,6 +1059,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -955,6 +1128,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
                                 },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
+                                },
                                 {
                                     "action": "highlight_event",
                                     "column": "Fault_Code",
@@ -1000,6 +1182,15 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                 {   
                                     "action": "populate_column_fault",
                                     "column": "Fault_name"
+                                },
+                                {   
+                                    "action": "insert_column",
+                                    "column": "TDM_STATUS",
+                                    "value": "TDM_STATUS_name"
+                                },
+                                {   
+                                    "action": "populate_tdm_status",
+                                    "column": "TDM_STATUS_name"
                                 },
                                 {
                                     "action": "highlight_event",
@@ -1049,6 +1240,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },                            
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1117,6 +1317,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1177,6 +1386,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1233,6 +1451,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1295,6 +1522,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1348,6 +1584,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1404,6 +1649,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1457,6 +1711,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1521,6 +1784,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1592,6 +1864,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1650,6 +1931,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1712,6 +2002,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1765,6 +2064,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -1826,6 +2134,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1885,6 +2202,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -1941,6 +2267,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2011,6 +2346,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2064,6 +2408,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2120,6 +2473,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2188,6 +2550,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2241,6 +2612,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2309,6 +2689,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2359,6 +2748,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2419,6 +2817,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2473,6 +2880,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2524,6 +2940,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2586,6 +3011,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2642,6 +3076,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2716,6 +3159,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2768,6 +3220,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
@@ -2833,6 +3294,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2893,6 +3363,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "Fault_name"
                             },
                             {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
+                            },
+                            {   
                                 "action": "append_column",
                                 "column": "Lin_fault_name",
                             },
@@ -2945,6 +3424,15 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                             {   
                                 "action": "populate_column_fault",
                                 "column": "Fault_name"
+                            },
+                            {   
+                                "action": "insert_column",
+                                "column": "TDM_STATUS",
+                                "value": "TDM_STATUS_name"
+                            },
+                            {   
+                                "action": "populate_tdm_status",
+                                "column": "TDM_STATUS_name"
                             },
                             {   
                                 "action": "append_column",
