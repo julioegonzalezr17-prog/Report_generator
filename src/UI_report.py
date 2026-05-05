@@ -857,6 +857,7 @@ class AnalysisWindow(QMainWindow):
                     }
         self.user_data = initial_data
         self.temp_json_path = temp_json_path
+        self.test_results = {}  # Dictionary to store analysis results by test number
         self.setWindowTitle("Test Analysis " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/monitoring.png"))
         self.setMinimumSize(700, 400)
@@ -947,25 +948,42 @@ class AnalysisWindow(QMainWindow):
         self.fill_action_column("TEST RESULT", info_state, tdm_fault_dict, tdm_config_dict, test_steps_dic) # Example: connect the button in row 1, column 1 to the click handler
 
     def update_RDP_clicked(self):
-        # Implement the logic to update the RDP report here
-        tests = [
-                {
-                    "num": 1,
-                    "desc": "Communication startup",
-                    "TDM_Logs": "tdm_log_1.txt",
-                    "Modbus_Logs": "modbus_log_1.txt",
-                    "notes": "test superado sin problemas",
-                    "result": "PASS"
-                },
-                {
-                    "num": 2,
-                    "desc": "Inverter stress test",
-                    "TDM_Logs": "tdm_log_2.txt",
-                    "Modbus_Logs": "modbus_log_2.txt",
-                    "notes": "Timeout detected",
-                    "result": "FAIL"
-                }
-            ]
+        # Check if all tests have been analyzed
+        total_tests = self.table_model.rowCount()
+        analyzed_tests = len(self.test_results)
+        
+        if analyzed_tests < total_tests:
+            QMessageBox.warning(
+                self,
+                "Incomplete Analysis",
+                f"All tests must be analyzed before updating the RDP report.\n\n"
+                f"Analyzed: {analyzed_tests}/{total_tests} tests.\n\n"
+                f"Please analyze all remaining tests first."
+            )
+            return
+        
+        # Build tests list from table data and stored results
+        tests = []
+        for row in range(self.table_model.rowCount()):
+            test_num = self.table_model.data(self.table_model.index(row, 0))
+            test_desc = self.table_model.data(self.table_model.index(row, 1)) or ""  # TEST EVENTS
+            test_notes = self.table_model.data(self.table_model.index(row, 2)) or ""  # TEST SCOPE
+            
+            # Get test result from the widget in column 6
+            result_index = self.table_model.index(row, 6)
+            result_widget = self.table.indexWidget(result_index)
+            if result_widget and hasattr(result_widget, '_test_result'):
+                test_result = result_widget._test_result
+            else:
+                test_result = "UNKNOWN"
+            
+
+            tests.append({
+                "num": test_num,
+                "desc": test_desc,
+                "notes": test_notes,
+                "result": test_result
+            })
 
         update_windows = UI_update_RDP.UpdateRDP(self.user_data, tests)
         update_windows.exec_()
@@ -1096,6 +1114,7 @@ class AnalysisWindow(QMainWindow):
                 if isinstance(value, dict) and "result_test" in value
             ]
             image_state = eval_result(lista_result_test)
+            container._test_result = "PASS" if image_state else "FAIL"
             if image_state:
                 container._cell_image.setPixmap(scaled_ok)
                 container._cell_image.setFixedSize(scaled_ok.size())
@@ -1433,6 +1452,7 @@ class AnalysisWindow(QMainWindow):
         if ouput_path == "ERROR":
             self.write_loaging_data(info_text, "ERROR opening report file ...")
 
+        self.test_results[str(test_und_eva)] = updated_data
         return updated_data
     
     def get_column_index(self, header_name: str) -> int:

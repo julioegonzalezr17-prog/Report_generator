@@ -101,18 +101,41 @@ class UpdateRDP(QDialog):
             return False
         return True
 
+    def _format_version_value(self, version_value: Any) -> str:
+        if isinstance(version_value, (list, tuple)):
+            return ".".join([str(v).strip() for v in version_value if str(v).strip()])
+        return str(version_value or "")
+
+    def _build_header_data(self) -> Dict[str, str]:
+        return {
+            "Request by:": self.user_input.get("requester_name", ""),
+            "Performed by:": self.user_input.get("tester_name", ""),
+            "TDM": self._format_version_value(self.user_input.get("tdm_version", "")),
+            "Control Board": self._format_version_value(self.user_input.get("control_board", "")),
+            "Inverter fw": self._format_version_value(self.user_input.get("inverter_dsp", "")),
+            "Inverter EEPROM":self._format_version_value(self.user_input.get("inverter_eeprom", "")),
+            "machine": self._format_machine_value()
+        }
+
+    def _format_machine_value(self) -> str:
+        machine = str(self.user_input.get("machine_model", "")).strip()
+        inverter = str(self.user_input.get("inverter_model", "")).strip()
+        return f"{machine} {inverter}".strip()
+
     def on_ok_clicked(self):
         """
         Validate input fields, file type, and load XLSX configuration (if applicable)
         before opening the analysis window.
         """
-        self._validate(self._collect_input())
+        if not self._validate(self._collect_input()):
+            return
         template_path = self.report_config.text().strip()
-        print(f"Selected template path: {template_path}")
+        logger.info("Report RDP file selected: %s", template_path)
         if not os.path.isfile(self.user_input["report_file"]):
             QMessageBox.warning(
                 self,
-                "File not found"
+                "File not found",
+                f"Report file not found: {self.user_input['report_file']}"
             )
             return
         ext = os.path.splitext(self.user_input["report_file"])[1].lower()
@@ -120,23 +143,25 @@ class UpdateRDP(QDialog):
             QMessageBox.warning(
                 self,
                 "Invalid file type",
-                f"The file must be an Excel or CSV file (.xlsx or .xls or .csv):"
+                f"The file must be an Excel or CSV file (.xlsx or .xls or .csv): {ext}"
             )
             return
-        print(f"Selected report file: {self.user_input['report_file']}")
-        data_path = Path(self.user_input["report_file"][1]).parent
-        print(f"Data path: {data_path}")
+
+        data_path = Path(self.user_input["report_file"]).parent
         
-    
-        # Open AnalysisWindow and pass data
-        # self._analysis_window = AnalysisWindow(initial_data=data, 
-        #                                         test_config_dict=test_config_dict, 
-        #                                         tdm_fault_dict=tdm_fault_dict, 
-        #                                         tdm_config_dict=tdm_config_dict,
-        #                                         test_steps_dic = test_analysis_steps,
-        #                                         temp_json_path = test_step_path
-        #                                         )
-        # self._analysis_window.show()
-        self.close()  # Close the start window after opening the analysis window
-        # Optionally hide start window (or close it if you want)
-        # self.hide()
+        header_data = self._build_header_data()
+        
+        # Call update_excel_template
+        try:
+            fill_RDP_report.update_excel_template(
+                template_path=template_path,
+                output_path=None,
+                data_path=str(data_path),
+                header_data=header_data,
+                tests=self.test_summary
+            )
+            QMessageBox.information(self, "Success", "RDP report updated successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to update RDP report: {str(e)}")
+        
+        self.close()

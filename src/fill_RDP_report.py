@@ -4,8 +4,8 @@ from openpyxl.styles import PatternFill
 from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Font, Alignment, Border, Side
 import shutil
-
-
+import logging
+logger = logging.getLogger(__name__)
 # =========================
 # CONFIGURACIÓN
 # =========================
@@ -111,6 +111,17 @@ def update_excel_template(
     header_data, 
     tests
 ):
+    """
+    Updates an Excel RDP report template with test results.
+    
+    Args:
+        template_path: Path to the .xlsx template file
+        output_path: Path to save the updated Excel file (None = overwrite template)
+        data_path: Path to data directory to copy test data from
+        header_data: Dict with header field values
+        tests: List of test dicts with: num, desc, notes, result
+        result: "PASS" (green) or "FAIL" (red)
+    """
     template_path = Path(template_path)
     if output_path is None:
         output_path = Path(template_path)
@@ -123,8 +134,7 @@ def update_excel_template(
     if template_path.suffix.lower() != ".xlsx":
         raise ValueError("The template must be an .xlsx file")   
     excel_dir = template_path.parent
-    print(f"Excel directory: {excel_dir}")
-    print(f"Data path: {data_path}")
+
     shutil.copytree(data_path, excel_dir, dirs_exist_ok=True)
 
     report_folder = excel_dir / "02_Report"
