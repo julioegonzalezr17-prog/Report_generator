@@ -2,7 +2,7 @@ import sys, os
 from typing import Dict, Any
 from PySide6.QtWidgets import (QSizePolicy, QWidget, QMainWindow, QLabel, QLineEdit, QTextEdit,
                                 QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout, QMessageBox,
-                                QFileDialog, QComboBox, QTableView, QHeaderView, QFrame)
+                                QFileDialog, QComboBox, QTableView, QHeaderView, QFrame, QDialog)
 from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem, QPixmap
 from PySide6.QtCore import Qt
 import Read_TDM_error
@@ -22,6 +22,9 @@ from dictDataIntegration import (inverter,
                         time_data_set,
                         sw_version)
 import logging
+import UI_user_fail_validation
+import UI_update_RDP
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +61,7 @@ class StartWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Test Analysis Setup " + "Version " + sw_version)
-        self.setWindowIcon(QIcon(":/iconos/info_icon.png"))
+        self.setWindowIcon(QIcon(":/info_icon.png"))
         self.setMinimumSize(500, 300)
 
         # ---- Widgets ----
@@ -184,6 +187,8 @@ class StartWindow(QMainWindow):
         self.TDM.addWidget(self.TDMZ)
 
         # User Name
+        self.requester_name = QLineEdit()
+        self.requester_name.setPlaceholderText("Requested by ...")
         self.tester_name = QLineEdit()
         self.tester_name.setPlaceholderText("Enter your name")
         self.notes = QTextEdit()
@@ -207,6 +212,7 @@ class StartWindow(QMainWindow):
         form.addRow("Inverter PFC Vxx.Tyy*", self.inverter_PFC)
         form.addRow("Control Board XX.YY.ZZ*", self.CB)
         form.addRow("TDM Version XX.YY.ZZ*", self.TDM)
+        form.addRow("Requested By*", self.requester_name)
         form.addRow("Tester Name*", self.tester_name)
         form.addRow("Notes", self.notes)
 
@@ -235,7 +241,7 @@ class StartWindow(QMainWindow):
     def on_browse_report_config(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select REport config file",
+            "Select Report config file",
             "",
             "All Files (*)"
         )
@@ -459,6 +465,7 @@ class StartWindow(QMainWindow):
             "tdm_version": [self.TDMX.text().strip(),
                             self.TDMY.text().strip(),
                             self.TDMZ.text().strip()],
+            "requester_name": self.requester_name.text().strip(),
             "tester_name": self.tester_name.text().strip(),
             "notes": self.notes.toPlainText().strip()            
         }
@@ -537,6 +544,8 @@ class StartWindow(QMainWindow):
             if element.isEnabled():
                 if not data["tdm_version"][i]:
                     missing.append("TDM Version")
+        if not data["requester_name"]:
+            missing.append("Requester Name")
         if not data["tester_name"]:
             missing.append("Tester Name")
         if missing:
@@ -600,7 +609,6 @@ class StartWindow(QMainWindow):
         ext = os.path.splitext(data["tdm_config"])[1].lower()    
         if ext == ".csv":
             tdm_config_dict = TDM_config_load.load_tdm_config(data["tdm_config"])
-            print(tdm_config_dict)
         elif ext in [".xlsx", ".xls"]:
             QMessageBox.warning(
                 self,
@@ -850,11 +858,11 @@ class AnalysisWindow(QMainWindow):
         self.user_data = initial_data
         self.temp_json_path = temp_json_path
         self.setWindowTitle("Test Analysis " + "Version " + sw_version)
-        self.setWindowIcon(QIcon(":/iconos/monitoring.png"))
+        self.setWindowIcon(QIcon(":/monitoring.png"))
         self.setMinimumSize(700, 400)
 
         img_label = QLabel()
-        pix = QPixmap(":/iconos/Ariston_logo.png")  # JPG, PNG, etc.
+        pix = QPixmap(":/Ariston_logo.png")  # JPG, PNG, etc.
         img_label.setPixmap(pix.scaled(img_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         img_label.setScaledContents(True) 
         img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding) 
@@ -906,11 +914,20 @@ class AnalysisWindow(QMainWindow):
         info_state.setText("Waiting for files to analyse...")
         info_state.setStyleSheet("font-size: 15px; font-weight: 600;")
         info_state.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        btn_RDP = QPushButton("Update RDP Report")        
+        btn_RDP.setMinimumSize(120, 40)
+        btn_RDP.setMaximumSize(200, 60)
+        btn_RDP.clicked.connect(self.update_RDP_clicked)
+
+        info_RDP = QVBoxLayout()
+        info_RDP.addWidget(btn_RDP)
+        info_RDP.addWidget(info_state)
 
         info_logo = QHBoxLayout()
         info_logo.addWidget(info)
         info_logo.addStretch()
-        info_logo.addWidget(info_state)
+        info_logo.addLayout(info_RDP)
+
 
         # ---- Layout ----
         container = QWidget()
@@ -929,6 +946,30 @@ class AnalysisWindow(QMainWindow):
             self.fill_column_by_header(["TDM LOG FILE","LIN LOG FILE","MODBUS LOG FILE"])         
         self.fill_action_column("TEST RESULT", info_state, tdm_fault_dict, tdm_config_dict, test_steps_dic) # Example: connect the button in row 1, column 1 to the click handler
 
+    def update_RDP_clicked(self):
+        # Implement the logic to update the RDP report here
+        tests = [
+                {
+                    "num": 1,
+                    "desc": "Communication startup",
+                    "TDM_Logs": "tdm_log_1.txt",
+                    "Modbus_Logs": "modbus_log_1.txt",
+                    "notes": "test superado sin problemas",
+                    "result": "PASS"
+                },
+                {
+                    "num": 2,
+                    "desc": "Inverter stress test",
+                    "TDM_Logs": "tdm_log_2.txt",
+                    "Modbus_Logs": "modbus_log_2.txt",
+                    "notes": "Timeout detected",
+                    "result": "FAIL"
+                }
+            ]
+
+        update_windows = UI_update_RDP.UpdateRDP(self.user_data, tests)
+        update_windows.exec_()
+        return
 
     def create_path_selector_cell(self)-> QWidget:
             new_container = QWidget()    
@@ -1035,15 +1076,16 @@ class AnalysisWindow(QMainWindow):
                                                     tdm_config_data=tdm_config_data,
                                                     step_dic = test_steps
                                                     )
-            def eval_result(relult_list)-> bool:
-                for data in relult_list:
+            
+            def eval_result(result_list)-> bool:
+                for data in result_list:
                     if data == "FAIL":
                         return False
                 return True
             container._cell_image.setVisible(True)
             image_state = False
-            pixmap_ok = QPixmap(":/iconos/check.png")  
-            pixmap_fail = QPixmap(":/iconos/multiply.png")
+            pixmap_ok = QPixmap(":/check.png")  
+            pixmap_fail = QPixmap(":/multiply.png")
             icon_h = 30
             scaled_ok = pixmap_ok.scaledToHeight(icon_h, Qt.SmoothTransformation)
             scaled_fail = pixmap_fail.scaledToHeight(icon_h, Qt.SmoothTransformation)
@@ -1117,17 +1159,16 @@ class AnalysisWindow(QMainWindow):
         
         def extract_v_t(codigo: str):
             """
-            'V01_T01' y returns (V, T) como int.
+            Extracts V and T values from a string like 'V01_T01' and returns them as integers.
             """
-            patron = r"V(\d+)_T(\d+)"
+            patron = r"V([0-9A-Fa-f]+)_T([0-9A-Fa-f]+)"
             match = re.match(patron, codigo)
 
             if not match:
-                v = 0
-                t = 0
+                return 0, 0
 
-            v = int(match.group(1))
-            t = int(match.group(2))
+            v = int(match.group(1), 16)
+            t = int(match.group(2), 16)
             return v, t
 
         version_data_list = get_column_for_action(step_dic["tests"]["1"]["steps"], "validate_version")
@@ -1196,7 +1237,9 @@ class AnalysisWindow(QMainWindow):
             if "DSP MAIN VERSION ECOKING" in version_data_norm and "PB DSP FW2" in version_data_norm:
                 x, y = extract_v_t(versions_read["fault_data"]["DSP MAIN VERSION ECOKING"])
                 z = int(versions_read["fault_data"]["PB DSP FW2"])
-                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y and user_data["inverter_dsp"][2] == z:
+                print(f"Extracted values - V: {x}, T: {y}, FW2: {z}")
+                print(f"User data - DSP: {user_data['inverter_dsp']}")
+                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y and int(user_data["inverter_dsp"][2]) == z:
                     dsp_check = True                   
                 else: 
                     dsp_check = False
@@ -1255,6 +1298,10 @@ class AnalysisWindow(QMainWindow):
                         text:str
                         ):
         current_test = info_text.text()
+        if result_test is None:
+                info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: black;")
+                info_text.setText(text) 
+                return
         if result_test == {}:
             info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: red;")
             info_text.setText(text) 
@@ -1353,12 +1400,21 @@ class AnalysisWindow(QMainWindow):
         if "VERSION" in self.Analysis[str(test_und_eva)]:
             result_version_validation = self.Analysis[str(test_und_eva)]["VERSION"]({"step_dic": step_dic,
                                                                                     "versions": result_fault_validation,
-                                                                                    "user_data": self.user_data})
+                                                                                    "user_data": self.user_data})            
             test_result["VERSION_validation"] = result_version_validation
             self.write_info_data(info_text,result_version_validation," VERSION Validation.")
-        logger.info("Test validation results: %s", result_fault_validation)                
         self.styler.save()
-        data_to_report = self.write_result_cell(Index, test_result)
+        logger.info("Test validation results: %s", result_fault_validation) 
+        # open popup with results
+        popup = UI_user_fail_validation.ValidationWindow(test_result, parent=self)
+        logger.info("Opening validation pop up window with results")
+        
+        if popup.exec() == QDialog.Accepted:
+            updated_data = popup.get_updated_data()
+        else:
+            updated_data = test_result 
+        self.write_info_data(info_text,None," Updated Analysis.")
+        data_to_report = self.write_result_cell(Index, updated_data)
         logger.debug("Test validation results: %s", data_to_report)
         if self.user_data["machine_model"] == "Pacman 5":
             data_print_report = {"TDM log" : test_excel,
@@ -1377,7 +1433,7 @@ class AnalysisWindow(QMainWindow):
         if ouput_path == "ERROR":
             self.write_loaging_data(info_text, "ERROR opening report file ...")
 
-        return test_result
+        return updated_data
     
     def get_column_index(self, header_name: str) -> int:
         
@@ -1448,6 +1504,7 @@ class AnalysisWindow(QMainWindow):
             return "_".join(padded)
         return (
             "<b>Session data received:</b><br>"
+            f"- Test requested by: {d.get('requester_name', '')}<br>"
             f"- Tester Name: {d.get('tester_name', '')}<br>"
             f"- Machine model: {d.get('machine_model', '')}<br>"
             f"- Inverter model: {d.get('inverter_model', '')}<br>"

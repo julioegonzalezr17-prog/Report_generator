@@ -234,11 +234,11 @@ class StepEngine:
             # -----------------------------
             elif action == "highlight_over_voltage":
                 column = step["column"]
-                if "AC input over voltage protection limit Vac" in self.test_config["tests"][str(self.test_num)].key():
+                if "AC input over voltage protection limit Vac" in self.test_config["tests"][str(self.test_num)].keys():
                     data_col = self._resolve_columns("AC input over voltage protection limit Vac")
                     data = self._resolve_value_list(data_col)
                     self.styler.highlight_over_voltage(column, data, color)
-                elif "Max DC limit (CMP on) [V]" in self.test_config["tests"][str(self.test_num)].key():
+                elif "Max DC limit (CMP on) [V]" in self.test_config["tests"][str(self.test_num)].keys():
                     data = self._resolve_value_list(data_col)
                     self.styler.highlight_over_voltage(column, data, color)
             # -----------------------------
@@ -246,7 +246,7 @@ class StepEngine:
             # -----------------------------
             elif action == "highlight_under_voltage":
                 column = step["column"]
-                if "AC input under voltage protection limit Vac" in self.test_config["tests"][str(self.test_num)].key():
+                if "AC input under voltage protection limit Vac" in self.test_config["tests"][str(self.test_num)].keys():
                     data_col = self._resolve_columns("AC input under voltage protection limit Vac")
                     data = self._resolve_value_list(data_col)
                     self.styler.highlight_under_voltage(column, data, color)

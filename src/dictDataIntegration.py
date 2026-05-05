@@ -1,5 +1,6 @@
 # usefull data for UI_report
-
+test_type = ["Standalone test","Integration test"]
+            
 inverter = {
             "Pacman 5": [
                             "RD4021",
@@ -12,7 +13,7 @@ inverter = {
                     ]
             } 
 header_row_default = 5      # Default header row for TDM error-fault XLSX files (1-based index)
-sw_version = "1.0.0"
+sw_version = "2.0.0"
 
 header_default_table = { 
                         "Pacman 5": [

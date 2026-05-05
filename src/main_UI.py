@@ -1,11 +1,16 @@
+import os
+os.environ["QT_LOGGING_RULES"] = "*.debug=false; *.warning=false"
 import sys
 from PySide6.QtWidgets import QApplication 
+from PySide6.QtGui import QFont
 import magic_logger
 import logging
-import os
+
 
 # code create exe -> pyinstaller --noconsole --onefile --icon=iconos/app_imag.ico --add-data "iconos;iconos" --collect-all PySide6 src/main_UI.py
+# codigo limpio exe -> pyinstaller ReportGenerator.spec --clean
 # pyside6-rcc resurces.qrc -o resurces_rc.py
+
 def main():
     log_file = magic_logger.setup_per_run_logging(app_name="TestAnalysis", 
                                                 level=logging.DEBUG,
@@ -17,8 +22,10 @@ def main():
     logger.debug("Debug check")
     logger.error("Error check")
 
-    import UI_report 
-    app = QApplication(sys.argv)
+    import UI_selection 
+    #import UI_user_fail_validation
+
+    app = QApplication(sys.argv)    
 
     # # Optional: light/dark style (uncomment to use a simple dark theme)
     # dark = """
@@ -29,8 +36,10 @@ def main():
     # """
     # app.setStyleSheet(dark)
 
-    win = UI_report.StartWindow()
+    #win = UI_user_fail_validation.ValidationWindow()
+    win = UI_selection.SelectionWindow()
     win.show()   
+
     exit_code = app.exec() 
     magic_logger.logging.shutdown()
     sys.exit(exit_code)

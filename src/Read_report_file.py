@@ -112,7 +112,7 @@ def modify_excel_with_headers(
         * SaveAs(FileFormat=51) if output_path is different (xlsx).
     """
     info_text = ""
-    excel = win32.gencache.EnsureDispatch("Excel.Application")
+    excel = win32.Dispatch("Excel.Application")
     excel.Visible = False
     excel.DisplayAlerts = False
 
@@ -124,8 +124,8 @@ def modify_excel_with_headers(
             wb = excel.Workbooks.Open(path)
             logger.info("Report loaded...: %s", path)
             return wb   
-        except pywintypes.com_error:
-            logger.warning("Report loaded Fail")
+        except pywintypes.com_error as e:
+            logger.error("Report loaded Fail: %s", e)
             return None
 
     wb = safe_open_excel(excel_path)
@@ -294,7 +294,7 @@ def modify_excel_with_headers(
             )
         else:
             cell.Value = str(payload)
-        logger.info("File updated header: %s", header_name)     
+        logger.info("File updated header: %s", header_name)     # addd the name of the file to check format
     # 4) Save safely
     try:
         if output_path is None or _norm_win_path(output_path) == excel_path:

@@ -1,10 +1,12 @@
 <!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file>iconos/info_icon.png</file>
-    <file>iconos/monitoring.png</file>
-    <file>iconos/app_imag.ico</file>
-    <file>iconos/Ariston_logo.png</file>
-    <file>iconos/check.png</file>
-    <file>iconos/multiply.png</file>
+<qresource prefix="/">
+    <file alias="info_icon.png">../iconos/info_icon.png</file>
+    <file alias="monitoring.png">../iconos/monitoring.png</file>
+    <file alias="app_imag.ico">../iconos/app_imag.ico</file>
+    <file alias="Ariston_logo.png">../iconos/Ariston_logo.png</file>
+    <file alias="check.png">../iconos/check.png</file>
+    <file alias="multiply.png">../iconos/multiply.png</file>
+    <file alias="standalone_image.png">../iconos/standalone_image.png</file>
+    <file alias="integration_image.png">../iconos/integration_image.png</file>
 </qresource>
 </RCC>
