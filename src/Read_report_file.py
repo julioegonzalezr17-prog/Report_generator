@@ -285,6 +285,9 @@ def modify_excel_with_headers(
 
         if _looks_like_file(payload):
             addr = _norm_win_path(payload)  # absolute, backslashes, no %20
+            # Clear cell before adding hyperlink to ensure TextToDisplay is shown
+            cell.Value = None
+            cell.Hyperlinks.Delete()
             # If another workbook with the same name is open, Excel can complain.
             # Optional: ensure unique save names or close duplicates beforehand.
             ws.Hyperlinks.Add(
