@@ -10,10 +10,12 @@ logger = logging.getLogger(__name__)
 # Utilities
 # ---------------------------
 def normalize_header(value):
-    """Case-insensitive, trimmed text normalization."""
+    """Case-insensitive, trimmed text normalization with robust character handling."""
+    import re
     if value is None:
         return ""
-    return str(value).strip().lower()
+    # Convert to string, strip, remove non-alphanumeric characters, convert to lowercase
+    return re.sub(r'[^a-zA-Z0-9]', '', str(value).strip()).lower()
 
 def get_effective_cell_value(ws, row, col):
     """In Excel COM, merged cells already return the visible value."""

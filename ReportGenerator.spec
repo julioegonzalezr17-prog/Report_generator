@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
 from PyInstaller.utils.hooks import collect_all
 
 # Recolectar PySide6 completo
@@ -13,11 +14,11 @@ binaries += pyside_bins
 hiddenimports += pyside_hidden
 
 # Archivo de versión PE
-version_file = r"C:\Users\gonzpidr\OneDrive - Ariston Group\Documenti\GitHub\Report_generator\version_info.txt"
+version_file = os.path.join(os.path.dirname(__name__), 'version_info.txt')
 
 a = Analysis(
     ['src/main_UI.py'],
-    pathex=[],
+    pathex=[os.path.abspath('src')],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

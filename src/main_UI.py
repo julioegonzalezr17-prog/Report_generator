@@ -11,6 +11,15 @@ import logging
 # codigo limpio exe -> pyinstaller ReportGenerator.spec --clean
 # pyside6-rcc resurces.qrc -o resurces_rc.py
 
+
+# git checkout version-2.0
+# git add .
+# git commit -m "Automatic RDP working"
+# git tag -a 2.2.0 -m "automatic rdp working"
+# git push origin version-2.0
+# git push origin 2.2.0
+
+
 def main():
     log_file = magic_logger.setup_per_run_logging(app_name="TestAnalysis", 
                                                 level=logging.DEBUG,

@@ -775,9 +775,11 @@ class ExcelStyler:
         logger.info("find_header_column %s",header_name)
         # Normalizar el nombre buscado
         def normalize_name(name):
-            """Normalizar nombre: MAYÚSCULAS, reemplazar underscores por espacios"""
-            normalized = str(name).strip().upper().replace("_", " ")
-            return " ".join(normalized.split())
+            """Normalizar nombre: MAYÚSCULAS, quitar espacios, guiones, underscores y caracteres no alfanuméricos"""
+            import re
+            # Convertir a string, quitar caracteres no alfanuméricos, convertir a mayúsculas
+            normalized = re.sub(r'[^a-zA-Z0-9]', '', str(name).strip()).upper()
+            return normalized
         
         target_normalized = normalize_name(header_name)
         

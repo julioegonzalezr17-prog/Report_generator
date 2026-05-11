@@ -6,11 +6,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 def _normalize_header(name):
-    """Convierte un nombre de columna al formato estándar: MAYÚSCULAS con espacios normalizados"""
-    # Reemplazar underscores y otros separadores por espacios, luego normalizar
-    normalized = str(name).strip().upper().replace("_", " ")
-    # Eliminar espacios múltiples
-    return " ".join(normalized.split())
+    """Convierte un nombre de columna al formato estándar: MAYÚSCULAS sin caracteres especiales"""
+    import re
+    # Convertir a string, quitar caracteres no alfanuméricos, convertir a mayúsculas
+    return re.sub(r'[^a-zA-Z0-9]', '', str(name).strip()).upper()
 
 def _normalize_step(step):
     """Normaliza todos los nombres de columna dentro de un paso"""

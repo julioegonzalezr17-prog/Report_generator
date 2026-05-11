@@ -23,7 +23,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.0.0"`)
+  - Software version (`sw_version = "2.2.04"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -248,7 +248,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.0.0"` | Application version |
+| `sw_version` | `"2.2.04"` | Application version |
 | `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |
