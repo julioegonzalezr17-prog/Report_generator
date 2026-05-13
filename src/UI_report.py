@@ -10,6 +10,8 @@ import Read_TDM_report
 import TDM_config_load
 import Load_configuration_test
 from ExcelStyler import ExcelStyler
+import lin_to_excel
+import modbus_to_excel
 from step_engine import StepEngine
 import json_motor
 import re
@@ -952,7 +954,7 @@ class AnalysisWindow(QMainWindow):
         total_tests = self.table_model.rowCount()
         analyzed_tests = len(self.test_results)
         
-        if analyzed_tests < total_tests: # No of tests with results vs total tests in the table
+        if analyzed_tests < 1: # No of tests with results vs total tests in the table
             QMessageBox.warning(
                 self,
                 "Incomplete Analysis",
@@ -1002,9 +1004,17 @@ class AnalysisWindow(QMainWindow):
             btn.setFixedWidth(100)
 
             def browse():
-                path, _ = QFileDialog.getOpenFileName(self, "Select File", "", "All Files (*)")
-                if path:
-                    line.setText(path)
+                path_file, _ = QFileDialog.getOpenFileName(self, "Select File", "", "All Files (*)")
+                ext = os.path.splitext(path_file)[1].lower()
+                if ext != ".csv":
+                    QMessageBox.warning(
+                        self,
+                        "Invalid file type",
+                        f"The file must be a CSV file: {path_file}"
+                    )
+                    return
+                else:
+                    line.setText(path_file)
             btn.clicked.connect(browse)
             layout.addWidget(line)
             layout.addWidget(btn)
@@ -1397,7 +1407,6 @@ class AnalysisWindow(QMainWindow):
         else:
             info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: red;")
         info_text.setText(current_test + "\n"+ result_test["result_test"] + text)        
-        return
     
     def write_result_cell(self, Index,
                         test_result)->str:
@@ -1449,10 +1458,10 @@ class AnalysisWindow(QMainWindow):
         
         path_line = getattr(container_path, "_text_path", None)
         path_mod = getattr(container_mod, "_text_path", None)
-        path_mod_text = str(path_mod.text().strip())
+        path_mod_text = modbus_to_excel.csv_to_excel_with_fill(str(path_mod.text().strip()))
         path_lin = getattr(container_lin, "_text_path", None)
         if path_lin is not None:
-            path_lin_text = str(path_lin.text().strip())
+            path_lin_text = lin_to_excel.lin_csv_to_excel(str(path_lin.text().strip()))
         delimiter = Read_TDM_report.detect_csv_delimiter(path_line.text().strip())
         header_cust, report_data = Read_TDM_report.read_custom_csv(path_line.text().strip(), delimiter)
         if report_data is None or header_cust is None: 

@@ -75,11 +75,11 @@ class ValidationWindow(QDialog):
         self.explanation.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.explanation.setStyleSheet("font-size: 14px; font-style: italic; margin-top: 10px; margin-bottom: 10px;")
 
-        self.selection_DGTO = QLabel("DGTO Failures")
+        self.selection_DGTO = QLabel("DGTO Not Detected")
         self.selection_DGTO.setAlignment(Qt.AlignCenter)
         self.selection_DGTO.setStyleSheet("font-size: 22px; font-weight: 600;")
 
-        self.selection_FAULT = QLabel("FAULT Failures")
+        self.selection_FAULT = QLabel("FAULT Not Expected")
         self.selection_FAULT.setAlignment(Qt.AlignCenter)
         self.selection_FAULT.setStyleSheet("font-size: 22px; font-weight: 600;")
 
