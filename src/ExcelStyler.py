@@ -829,7 +829,11 @@ class ExcelStyler:
 
         for h in headers:
             col_let = self.find_header_column(h)
-            col = self.cell_letter_to_number(col_let) 
+            col = self.cell_letter_to_number(col_let)
+            if col is None:
+                logger.warning("validate_version: header not found for %s", h)
+                results[h] = None
+                continue
 
             # ---- Search for first valid numeric decimal value in this col ----
             found_number = None
@@ -837,7 +841,7 @@ class ExcelStyler:
                 cell_value = ws.cell(row=row, column=col).value                 
                 text_log = f"Checking cell {row},{col} with value: {cell_value}"
                 logger.info("validate_version runing: %s", text_log)
-                if cell_value is None:
+                if cell_value is None or int(cell_value) == 0:
                     continue
 
                 # Try to parse as int (numeric)
@@ -845,10 +849,10 @@ class ExcelStyler:
                     number = int(cell_value)
                     found_number = number
                     break
-                except:
+                except Exception:
                     continue
-            text_log = f"Header '{h}': found number = {found_number}"  
-            logger.info("validate_version runing: %s", text_log)        
+            text_log = f"Header '{h}': found number = {found_number}"
+            logger.info("validate_version runing: %s", text_log)
             if found_number is None:
                 results[h] = None
                 continue
@@ -1078,4 +1082,43 @@ class ExcelStyler:
                 self.find_and_highlight_in_list(voltage_value, header, color)       
         logger.info("highlight_under_voltage OK")
         return
+
+
+    def highlight_der_temp(self, column: str, thresholds: list):
+        RED_FILL = PatternFill(start_color="FFFFC7CE", end_color="FFFFC7CE", fill_type="solid")
+        ORANGE_FILL = PatternFill(start_color="FFFFC000", end_color="FFFFC000", fill_type="solid")
+        YELLOW_FILL = PatternFill(start_color="FFFFEB9C",end_color="FFFFEB9C",fill_type="solid")
+
+        logger.info("highlight_der_temp INPUT: %s", thresholds)
+
+        if not thresholds or len(thresholds) != 3:
+            logger.error("Invalid thresholds provided")
+            return
+
+        low_limit, medium_limit, high_limit = thresholds
+        header_name = column
+
+        col_letter = self.find_header_column(header_name)
+        if col_letter is None:
+            logger.warning("Header not found: %s", header_name)
+            return
+
+        col_idx = self.cell_letter_to_number(col_letter)
+
+        for row in range(self.start_row + 1, self.ws.max_row + 1):
+            cell = self.ws.cell(row=row, column=col_idx)
+
+            try:
+                value = float(cell.value)
+            except (TypeError, ValueError):
+                continue
+
+            if value > high_limit:
+                cell.fill = RED_FILL
+            elif value > medium_limit:
+                cell.fill = ORANGE_FILL
+            elif value > low_limit:
+                cell.fill = YELLOW_FILL
+
+        logger.info("highlight_der_temp OK")
 

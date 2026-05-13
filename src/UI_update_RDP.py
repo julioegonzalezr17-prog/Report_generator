@@ -147,8 +147,7 @@ class UpdateRDP(QDialog):
             )
             return
 
-        data_path = Path(self.user_input["report_file"]).parent
-        
+        data_path = Path(self.user_input["report_file"]).parent.parent     
         header_data = self._build_header_data()
         
         # Call update_excel_template

@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import win32com.client as win32
 import pywintypes
+import tempfile
+import shutil
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,6 +11,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------
 # Utilities
 # ---------------------------
+
+
+def _excel_safe_image_path(src_path: str) -> str:
+    tmp_dir = tempfile.gettempdir()
+    dst = os.path.join(tmp_dir, os.path.basename(src_path))
+    shutil.copy2(src_path, dst)
+    return dst
+
 def normalize_header(value):
     """Case-insensitive, trimmed text normalization with robust character handling."""
     import re
@@ -135,7 +145,7 @@ def modify_excel_with_headers(
         info_text = "ERROR"
         return info_text
 
-    ws = wb.ActiveSheet
+    ws = wb.Worksheets(1)
 
     # 1) Find header rows + segments
     header_rows = find_header_rows(ws, expected_headers=table_header_structure)
@@ -186,9 +196,13 @@ def modify_excel_with_headers(
         is_supporting_data = normalize_header(header_name) == normalize_header("Supporting Data")
         is_image_path = isinstance(payload, str) and payload.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff"))        
         if is_supporting_data and is_image_path:
-            try:
-                img_path = _norm_win_path(payload)
+            img_path = _excel_safe_image_path(_norm_win_path(payload))
+            if not os.path.isfile(img_path):
+                cell.Value = str(payload)
+                logger.warning("Supporting Data image not found, writing path text instead: %s", img_path)
+                continue
 
+            try:
                 # 0) Desactivar compresión de imágenes a nivel de workbook (clave)
                 try:
                     # ws.Parent es el Workbook
@@ -216,7 +230,10 @@ def modify_excel_with_headers(
                             pass
                 except Exception:
                     pass
-                cell = ws.Cells(target_row, found_col)        
+                cell = ws.Cells(target_row, found_col)                    
+                cell.Value = None
+                cell.Hyperlinks.Delete()
+    
                 # 2) Insertar con resolución ORIGINAL (sin forzar tamaño)
                 #    Preferir AddPicture2 (Office 2010+) para evitar compresión interna.
                 try:
@@ -225,7 +242,7 @@ def modify_excel_with_headers(
                         img_path, False, True,
                         cell.Left,
                         cell.Top,
-                        -1, -1, 0                         
+                        -1, -1                         
                     )
                     # Si AddPicture2 no soporta el arg 'Compress' en tu build, el código anterior igual inserta nativo.
                 except Exception:
@@ -244,8 +261,11 @@ def modify_excel_with_headers(
 
                 pic.LockAspectRatio = True
                 pic.Placement = 2
-
+                logger.info("File updated header: %s", header_name)
                 
+                cell.Value = None
+                cell.Hyperlinks.Delete()
+
                 # 4) Ajustar la fila para que la imagen quepa (sin tocar la imagen)
                 try:
                     # Añadimos un pequeño margen visual
@@ -282,23 +302,33 @@ def modify_excel_with_headers(
 
             except Exception:
                 # Fallback: si algo falla, al menos escribir la ruta como texto
+                logger.exception("AddPicture2 failed")
                 cell.Value = str(payload)   
-            continue
-
-        if _looks_like_file(payload):
+            continue        
+        LOG_HEADERS = {
+            normalize_header("Modbus Log"),
+            normalize_header("TDM log"),
+            normalize_header("Lin Log"),
+        }
+        if normalize_header(header_name) in LOG_HEADERS:
+            
             addr = _norm_win_path(payload)  # absolute, backslashes, no %20
             # Clear cell before adding hyperlink to ensure TextToDisplay is shown
             cell.Value = None
             cell.Hyperlinks.Delete()
             # If another workbook with the same name is open, Excel can complain.
             # Optional: ensure unique save names or close duplicates beforehand.
-            ws.Hyperlinks.Add(
+            hl = ws.Hyperlinks.Add(
                 Anchor=cell,
-                Address=addr,
-                TextToDisplay=f"{header_name}_test_{test_num}"
+                Address=addr               
             )
+            cell.value = f"{header_name}_test_{test_num}"
         else:
-            cell.Value = str(payload)
+            cell.Hyperlinks.Delete()
+            cell.Value = str(payload)                        
+            cell.Font.Underline = False
+            cell.Font.ColorIndex = 1   # black
+
         logger.info("File updated header: %s", header_name)     # addd the name of the file to check format
     # 4) Save safely
     try:

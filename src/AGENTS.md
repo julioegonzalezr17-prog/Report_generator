@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-11
+Last updated: 2026-05-13
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -23,7 +23,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.2.04"`)
+  - Software version (`sw_version = "2.3.00"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -41,7 +41,7 @@ Multi-window interface orchestration:
   - Auto-detects table start rows
   - Applies cell styling (fill colors: green #C6EFCE for PASS, red #FFC7CE for FAIL)
   - Table headers: `["Test #", "Description", "Logs", "Notes", "Result"]`
-- **`Read_report_file.py`** - Utility functions for reading/parsing report files.
+- **`Read_report_file.py`** - Utility functions for reading/parsing report files. Handles header updates and writes Supporting Data images with fallback to text when needed.
 
 ### Analysis/Processing Engine
 - **`step_engine.py`** - Executes JSON-like step actions:
@@ -117,7 +117,9 @@ SelectionWindow (UI_selection.py)
 | **json_motor.py** | Default step catalog; normalization helpers |
 | **ExcelStyler.py** | Low-level Excel editing (highlight, format, validate) |
 | **magic_logger.py** | Per-run logging with rotation |
+### Recent changes
 
+- 2026-05-13: updated version metadata to `2.3.00`, aligned `version_info.txt` with `dictDataIntegration.sw_version`, and fixed `UI_user_fail_validation.py` so no selected failures result in PASS.
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -248,7 +250,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.2.04"` | Application version |
+| `sw_version` | `"2.3.00"` | Application version |
 | `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |

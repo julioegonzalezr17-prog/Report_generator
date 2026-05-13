@@ -130,6 +130,11 @@ def save_to_excel(excel_path: str, custom_header: pd.DataFrame, data_frame: pd.D
             data_frame.to_excel(
                 writer, index=False, sheet_name="DATA", startrow=2
             )
+            
+            # FREEZE PANES (Row 3)
+            ws = writer.book["DATA"]
+            ws.freeze_panes = "A4"
+
             logger.debug("File saved succesfully !!!!!")
     except Exception:
         logger.exception("ERROR saving data: %s", excel_path)    

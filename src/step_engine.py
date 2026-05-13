@@ -271,7 +271,31 @@ class StepEngine:
             elif action == "populate_tdm_status":
                 header = step["column"]
                 code_names = self.styler.populate_tdm_status()
-                self.styler.populate_column(header, code_names)   
+                self.styler.populate_column(header, code_names) 
+
+            # -----------------------------
+            # 17. highlight_der_temp
+            # -----------------------------
+            elif action == "highlight_der_temp":
+                column = step["column"]
+                lim_fast = None
+                lim_slow = None 
+                lim_off = None
+                thresholds = None
+                print(f"DEBUG: test_config for test {self.test_num} = {self.test_config['tests'][str(self.test_num)].keys()}")
+
+                if "IPM TEMPERATURE SHUT-OFF [°C]" in self.test_config["tests"][str(self.test_num)].keys():
+                    lim_off = self._resolve_value_list(self._resolve_columns("IPM TEMPERATURE SHUT-OFF [°C]"))
+                if "IPM TEMPERATURE DERATING–FAST DROP [°C]" in self.test_config["tests"][str(self.test_num)].keys():
+                    lim_fast = self._resolve_value_list(self._resolve_columns("IPM TEMPERATURE DERATING–FAST DROP [°C]"))
+                if "IPM TEMPERATURE DERATING–SLOW DROP [°C]" in self.test_config["tests"][str(self.test_num)].keys():
+                    lim_slow = self._resolve_value_list(self._resolve_columns("IPM TEMPERATURE DERATING–SLOW DROP [°C]"))
+                
+                if lim_slow is None and lim_fast is not None:
+                    thresholds = [lim_fast[0], lim_fast[0], lim_off[0]] 
+                else: 
+                    thresholds = [lim_slow[0], lim_fast[0], lim_off[0]]
+                self.styler.highlight_der_temp(column, thresholds)  
             # -----------------------------    
             # -----------------------------
             # 16. Custom error if unsupported action

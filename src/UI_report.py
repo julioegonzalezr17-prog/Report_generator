@@ -912,7 +912,7 @@ class AnalysisWindow(QMainWindow):
         info.setStyleSheet("font-size: 15px; font-weight: 600;")
         info.setTextInteractionFlags(Qt.TextSelectableByMouse)
         info_state = QLabel()
-        info_state.setText("Waiting for files to analyse...")
+        info_state.setText("Waiting for files to analyze...")
         info_state.setStyleSheet("font-size: 15px; font-weight: 600;")
         info_state.setTextInteractionFlags(Qt.TextSelectableByMouse)
         btn_RDP = QPushButton("Update RDP Report")        
@@ -952,7 +952,7 @@ class AnalysisWindow(QMainWindow):
         total_tests = self.table_model.rowCount()
         analyzed_tests = len(self.test_results)
         
-        if analyzed_tests < total_tests:
+        if analyzed_tests < total_tests: # No of tests with results vs total tests in the table
             QMessageBox.warning(
                 self,
                 "Incomplete Analysis",
@@ -1023,7 +1023,7 @@ class AnalysisWindow(QMainWindow):
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        btn = QPushButton("Analyse Data")
+        btn = QPushButton("Analyze Data")
         btn.setFixedWidth(100)
         btn.setStyleSheet("font-size: 12px; padding: 1px;")
         img = QLabel()
@@ -1056,7 +1056,7 @@ class AnalysisWindow(QMainWindow):
                 path_mod = getattr(path_widget_mod, "_text_path", None)
                 if  path_line.text().strip() == "" or path_mod.text().strip() == "" or not path_line.text().lower().endswith(".csv"):
                     info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: red;")
-                    info_text.setText("ERROR: NO data to analyse !!!!")
+                    info_text.setText("ERROR: NO data to analyze !!!!")
                     return
                 else:
                     info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: green;")
@@ -1077,7 +1077,7 @@ class AnalysisWindow(QMainWindow):
                 path_lin = getattr(path_widget_lin, "_text_path", None)
                 if  path_line.text().strip() == "" or path_mod.text().strip() == "" or path_lin.text().strip() == "":
                     info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: red;")
-                    info_text.setText("ERROR: NO data to analyse !!!!")
+                    info_text.setText("ERROR: NO data to analyze !!!!")
                     return
                 else:
                     info_text.setStyleSheet("font-size: 15px; font-weight: 600; color: green;")
@@ -1170,135 +1170,202 @@ class AnalysisWindow(QMainWindow):
         arm_check = False
         pfc_check = False
 
+
+
         def get_column_for_action(steps, action_name):
             for step in steps:
                 if step.get("action") == action_name:
                     return step.get("column")
             return None
+
+        def get_fault_value(key: str):
+            fault_data = versions_read.get("fault_data", {}) if isinstance(versions_read, dict) else {}
+            if key in fault_data:
+                return fault_data[key]
+            normalized_target = self.normalize_name(key)
+            for stored_key, value in fault_data.items():
+                if self.normalize_name(stored_key) == normalized_target:
+                    return value
+            return None
         
         def extract_v_t(codigo: str):
             """
-            Extracts V and T values from a string like 'V01_T01' and returns them as integers.
+            Extracts V and T values from a version string.
+            Supports formats like:
+            - 'V0F_T0F'
+            - '0f.0f.01'
+            - '15.15.01'
+            - 'V15_T15'
             """
-            patron = r"V([0-9A-Fa-f]+)_T([0-9A-Fa-f]+)"
-            match = re.match(patron, codigo)
-
-            if not match:
+            if not isinstance(codigo, str):
                 return 0, 0
 
-            v = int(match.group(1), 16)
-            t = int(match.group(2), 16)
-            return v, t
+            def token_to_int(token: str) -> int:
+                token = token.strip().lower()
+                if token.startswith("0x"):
+                    token = token[2:]
+                if token.isdigit():
+                    return int(token)
+                if re.fullmatch(r"[0-9a-f]+", token):
+                    return int(token, 16)
+                return 0
 
-        version_data_list = get_column_for_action(step_dic["tests"]["1"]["steps"], "validate_version")
+            # First try the explicit V/T format
+            patron = r"V([0-9A-Fa-f]+)[_\.\- ]*T([0-9A-Fa-f]+)"
+            match = re.match(patron, codigo, re.IGNORECASE)
+            if match:
+                v = token_to_int(match.group(1))
+                t = token_to_int(match.group(2))
+                return v, t
+
+            # Fallback: parse the first two numeric tokens from any separator
+            tokens = re.findall(r"[0-9A-Fa-f]+", codigo)
+            if len(tokens) >= 2:
+                return token_to_int(tokens[0]), token_to_int(tokens[1])
+
+            return 0, 0
+
+        test_number = str(data.get("test_num", "1"))
+        steps = step_dic.get("tests", {}).get(test_number, {}).get("steps", [])
+        if not steps:
+            steps = step_dic.get("tests", {}).get("1", {}).get("steps", [])
+        version_data_list = get_column_for_action(steps, "validate_version")
         if not isinstance(version_data_list, list):
             version_data_list = [version_data_list]
         version_data_norm =[]    
         for ver in version_data_list:
-            version_data_norm.append(self.normalize_name(ver))          
+            version_data_norm.append(self.normalize_name(ver))
+        
+        # Initialize default values
+        result_data = {}
+        eeprom_check = False
+        dsp_check = False
+        arm_check = False
+        pfc_check = False
+        result_test = "FAIL"
 
         if user_data["inverter_model"] == "RD4021":    
-            if "EEPROM VERSION EK RD" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["EEPROM VERSION EK RD"])
-                if int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y:
-                    eeprom_check = True
-                else: 
-                    eeprom_check = False 
-                result_data = {"Eeprom": versions_read["fault_data"]["EEPROM VERSION EK RD"]}        
-            if "DSP MAIN VERSION ECOKING" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["DSP MAIN VERSION ECOKING"])
-                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y:
-                    dsp_check = True
-                else: 
+            if "EEPROMVERSIONEKRD" in version_data_norm:
+                raw_value = get_fault_value("EEPROMVERSIONEKRD")
+                result_data = {"Eeprom": raw_value}
+                if raw_value is None:
+                    eeprom_check = False
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        eeprom_check = int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y
+                    except (ValueError, IndexError):
+                        eeprom_check = False
+            if "DSPMAINVERSIONECOKING" in version_data_norm:
+                raw_value = get_fault_value("DSPMAINVERSIONECOKING")
+                result_data["DSP"] = raw_value
+                if raw_value is None:
                     dsp_check = False
-                result_data["DSP"] = versions_read["fault_data"]["DSP MAIN VERSION ECOKING"]        
-            else:
-                result_test = "FAIL" 
-            if eeprom_check and dsp_check:
-                result_test = "PASS" 
-            else:
-                result_test = "FAIL" 
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        dsp_check = int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y
+                    except (ValueError, IndexError):
+                        dsp_check = False
+            result_test = "PASS" if (eeprom_check and dsp_check) else "FAIL"
             out_data = {"result_test": result_test, 
                         "versions": result_data}                    
 
         elif user_data["inverter_model"] == "ID1PH_R290":
-            if "EEPROM VERSION EK RD" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["EEPROM VERSION EK RD"])
-                if int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y:
-                    eeprom_check = True                   
-                else: 
-                    eeprom_check = False 
-                result_data = {"Eeprom": versions_read["fault_data"]["EEPROM VERSION EK RD"]}
-            if "DSP MAIN VERSION ECOKING" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["DSP MAIN VERSION ECOKING"])
-                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y:
-                    dsp_check = True                    
-                else: 
+            if "EEPROMVERSIONEKRD" in version_data_norm:
+                raw_value = get_fault_value("EEPROMVERSIONEKRD")
+                result_data = {"Eeprom": raw_value}
+                if raw_value is None:
+                    eeprom_check = False
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        eeprom_check = int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y
+                    except (ValueError, IndexError):
+                        eeprom_check = False
+            if "DSPMAINVERSIONECOKING" in version_data_norm:
+                raw_value = get_fault_value("DSPMAINVERSIONECOKING")
+                result_data["DSP"] = raw_value
+                if raw_value is None:
                     dsp_check = False
-                result_data["DSP"] = versions_read["fault_data"]["DSP MAIN VERSION ECOKING"]   
-            if "HW VERSION ECOKING" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["HW VERSION ECOKING"])
-                if int(user_data["inverter_arm"][0]) == x and int(user_data["inverter_arm"][1]) == y:
-                    arm_check = True                   
-                else: 
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        dsp_check = int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y
+                    except (ValueError, IndexError):
+                        dsp_check = False
+            if "HWVERSIONECOKING" in version_data_norm:
+                raw_value = get_fault_value("HWVERSIONECOKING")
+                result_data["ARM"] = raw_value
+                if raw_value is None:
                     arm_check = False
-                result_data["ARM"] =  versions_read["fault_data"]["HW VERSION ECOKING"]
-            else:
-                result_test = "FAIL" 
-            if eeprom_check and dsp_check and arm_check:
-                result_test = "PASS" 
-            else:
-                result_test = "FAIL" 
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        arm_check = int(user_data["inverter_arm"][0]) == x and int(user_data["inverter_arm"][1]) == y
+                    except (ValueError, IndexError):
+                        arm_check = False
+            result_test = "PASS" if (eeprom_check and dsp_check and arm_check) else "FAIL"
             out_data = {"result_test": result_test, 
-                        "versions": result_data} 
+                        "versions": result_data}
 
-        elif user_data["inverter_model"] == "Ariston":
-            if "DSP MAIN VERSION ECOKING" in version_data_norm and "PB DSP FW2" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["DSP MAIN VERSION ECOKING"])
-                z = int(versions_read["fault_data"]["PB DSP FW2"])
-                print(f"Extracted values - V: {x}, T: {y}, FW2: {z}")
-                print(f"User data - DSP: {user_data['inverter_dsp']}")
-                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y and int(user_data["inverter_dsp"][2]) == z:
-                    dsp_check = True                   
-                else: 
+        elif user_data["inverter_model"] == "Ariston":            
+            if "DSPMAINVERSIONECOKING" in version_data_norm and "PBDSPFW2" in version_data_norm:
+                raw_dsp = get_fault_value("DSPMAINVERSIONECOKING")
+                raw_pb = get_fault_value("PBDSPFW2")
+                if raw_dsp is None or raw_pb is None:
                     dsp_check = False
-                result_data["DSP"] = f"V{x}.{y}.{z}"    
+                else:
+                    x, y = extract_v_t(raw_dsp)
+                    try:
+                        a, b = extract_v_t(raw_pb)
+                        z = int(b)
+                    except (TypeError, ValueError):
+                        z = -1
+                    try:
+                        dsp_check = int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y and int(user_data["inverter_dsp"][2]) == z
+                    except (ValueError, IndexError):
+                        dsp_check = False
+                result_data["DSP"] = f"V{x}.{y}.{z}" if (raw_dsp and raw_pb) else None
             else:
-                result_test = "FAIL" 
-            if dsp_check:
-                result_test = "PASS"
-            else:
-                result_test = "FAIL"
+                dsp_check = False
+            result_test = "PASS" if dsp_check else "FAIL"
             out_data = {"result_test": result_test, 
-                        "versions": result_data} 
+                        "versions": result_data}
 
         elif user_data["inverter_model"] == "RD4018":  
-            if "EEPROM VERSION EK RD" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["EEPROM VERSION EK RD"])
-                if int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y:
-                    eeprom_check = True                   
-                else: 
-                    eeprom_check = False 
-                result_data = {"Eeprom": versions_read["fault_data"]["EEPROM VERSION EK RD"]}
-            if "DSP MAIN VERSION ECOKING" in version_data_norm:
-                x, y = extract_v_t(versions_read["fault_data"]["DSP MAIN VERSION ECOKING"])
-                if int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y:
-                    dsp_check = True                    
-                else: 
+            if "EEPROMVERSIONEKRD" in version_data_norm:
+                raw_value = get_fault_value("EEPROMVERSIONEKRD")
+                result_data = {"Eeprom": raw_value}
+                if raw_value is None:
+                    eeprom_check = False
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        eeprom_check = int(user_data["inverter_eeprom"][0]) == x and int(user_data["inverter_eeprom"][1]) == y
+                    except (ValueError, IndexError):
+                        eeprom_check = False
+            if "DSPMAINVERSIONECOKING" in version_data_norm:
+                raw_value = get_fault_value("DSPMAINVERSIONECOKING")
+                result_data["DSP"] = raw_value
+                if raw_value is None:
                     dsp_check = False
-                result_data["DSP"] = versions_read["fault_data"]["DSP MAIN VERSION ECOKING"]
-            else:
-                result_test = "FAIL" 
+                else:
+                    x, y = extract_v_t(raw_value)
+                    try:
+                        dsp_check = int(user_data["inverter_dsp"][0]) == x and int(user_data["inverter_dsp"][1]) == y
+                    except (ValueError, IndexError):
+                        dsp_check = False
             pfc_check = True
             data_pfc = f'User data V{user_data["inverter_pfc"][0]}_T{user_data["inverter_pfc"][1]}'
             result_data["PFC"] = data_pfc
-            if eeprom_check and dsp_check and pfc_check:
-                result_test = "PASS"
-            else:
-                result_test = "FAIL"
+            result_test = "PASS" if (eeprom_check and dsp_check and pfc_check) else "FAIL"
             out_data = {"result_test": result_test, 
-                        "versions": result_data}     
-
+                        "versions": result_data}
+        else:
+            # Unknown model
+            out_data = {"result_test": "FAIL", "versions": result_data}
+        
         return out_data
     
     def normalize_name(self, name):
@@ -1419,7 +1486,8 @@ class AnalysisWindow(QMainWindow):
         if "VERSION" in self.Analysis[str(test_und_eva)]:
             result_version_validation = self.Analysis[str(test_und_eva)]["VERSION"]({"step_dic": step_dic,
                                                                                     "versions": result_fault_validation,
-                                                                                    "user_data": self.user_data})            
+                                                                                    "user_data": self.user_data,
+                                                                                    "test_num": test_und_eva})            
             test_result["VERSION_validation"] = result_version_validation
             self.write_info_data(info_text,result_version_validation," VERSION Validation.")
         self.styler.save()
@@ -1432,7 +1500,7 @@ class AnalysisWindow(QMainWindow):
             updated_data = popup.get_updated_data()
         else:
             updated_data = test_result 
-        self.write_info_data(info_text,None," Updated Analysis.")
+        self.write_info_data(info_text,None," If test result (✅, ❌) is not shown click again the Analysis button.")
         data_to_report = self.write_result_cell(Index, updated_data)
         logger.debug("Test validation results: %s", data_to_report)
         if self.user_data["machine_model"] == "Pacman 5":
@@ -1446,6 +1514,7 @@ class AnalysisWindow(QMainWindow):
                                 "Modbus Log": path_mod_text,
                                 "Analysis": data_to_report,
                                 "Supporting Data": plot_path}
+        print("Data to report:", data_print_report)
         ouput_path = Read_report_file.modify_excel_with_headers(self.user_data["report_file"],
                                                     data_print_report,
                                                     test_und_eva)

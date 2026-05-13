@@ -13,7 +13,7 @@ inverter = {
                     ]
             } 
 header_row_default = 5      # Default header row for TDM error-fault XLSX files (1-based index)
-sw_version = "2.2.04"
+sw_version = "2.3.00"
 
 header_default_table = { 
                         "Pacman 5": [
@@ -682,6 +682,10 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                             "Faults Expected"
                                             ],
                                     "color": "FF0000"
+                                },
+                                {
+                                    "action": "highlight_der_temp",
+                                    "column": "HEATSINK_TEMPERATURE_T°C"
                                 },
                                 {
                                     "action": "plot_headers_from_excel",
@@ -1835,6 +1839,10 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                         "Faults Expected"
                                         ],
                                 "color": "FF0000"
+                            },
+                            {
+                                "action": "highlight_der_temp",
+                                "column": "HEATSINK_TEMPERATURE_T°C"
                             },
                             {
                                 "action": "plot_headers_from_excel",

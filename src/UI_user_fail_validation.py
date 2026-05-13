@@ -28,7 +28,7 @@ class ValidationWindow(QDialog):
         self.setModal(True)
         self.setWindowTitle(f"Fault Validation - Version {sw_version}")
         self.setWindowIcon(QIcon(":/monitoring.png"))
-        self.resize(700, 400)
+        self.resize(700, 700)
 
         global_font = QFont()
         global_font.setPointSize(12)
@@ -223,10 +223,8 @@ class ValidationWindow(QDialog):
             dgto_validation["DGTO_miss_list"] = selected_dgto
             dgto_validation["result_test"] = "FAIL"
         else:
-            # No DGTO selected → cancel DGTO validation
             dgto_validation["DGTO_miss_list"] = []
             dgto_validation["result_test"] = "PASS"
-
 
         # ---------- FAULT ----------
         fault_validation = self.test_results.get("FAULT_validation", {})
@@ -239,13 +237,14 @@ class ValidationWindow(QDialog):
             if self.fault_checkboxes.get(fault) and self.fault_checkboxes[fault].isChecked()
         }
 
+        fault_validation.setdefault("fault_data", {})
         if selected_faults:
-            fault_validation["Faults_Not_expected"] = selected_faults
+            fault_validation["fault_data"]["Faults_Not_expected"] = selected_faults
             fault_validation["result_test"] = "FAIL"
         else:
-            # No FAULT selected → cancel FAULT validation
-            fault_validation["Faults_Not_expected"] = {}
+            fault_validation["fault_data"]["Faults_Not_expected"] = {}
             fault_validation["result_test"] = "PASS"
+
         logger.info("Result selection: %s", self.test_results)
         return self.test_results
     
@@ -261,8 +260,16 @@ class ValidationWindow(QDialog):
             lbl.setStyleSheet("color: green;")
             layout.addWidget(lbl)
         else:
-            for label, real_key in items_dict.items():
-                cb = QCheckBox(label)
+            # Accept both dict and iterable of labels
+            if isinstance(items_dict, dict):
+                iterator = items_dict.items()
+            elif isinstance(items_dict, (list, tuple, set)):
+                iterator = ((item, item) for item in items_dict)
+            else:
+                raise TypeError("_create_fail_list expects a dict or iterable of items")
+
+            for label, real_key in iterator:
+                cb = QCheckBox(str(label))
                 storage_dict[real_key] = cb   # <-- clave REAL (2055)
                 layout.addWidget(cb)
 
