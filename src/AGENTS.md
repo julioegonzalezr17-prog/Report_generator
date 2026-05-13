@@ -23,11 +23,13 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.3.00"`)
+  - Software version (`sw_version = "2.3.02"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
-  - LIN error dictionary
+  - LIN error dictionary (codes 0-21 with names and types)
+  - TDM status dictionary (status codes with descriptions)
+  - Default test steps for Pacman 5 (DEFAULT_TEST_STEPS_PACMAN5) defining automated actions for report processing
   - Time dataset options: `Absolute time`, `Relative Time`
 - **`Load_configuration_test.py`** - Loads test definitions from XLSX sheet (inverter-specific).
 - **`TDM_config_load.py`** - Loads DGTO configuration from CSV with encoding/separator fallback.
@@ -119,7 +121,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-13: updated version metadata to `2.3.00`, aligned `version_info.txt` with `dictDataIntegration.sw_version`, and fixed `UI_user_fail_validation.py` so no selected failures result in PASS.
+- 2026-05-13: Updated version to 2.3.02. Modified dictDataIntegration.py to include comprehensive default test steps (DEFAULT_TEST_STEPS_PACMAN5) for automated report processing, including column highlighting, fault population, version validation, and event highlighting. Added detailed LIN error dictionary and TDM status mappings. Updated version_info.txt to reflect new version (2, 3, 2, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
