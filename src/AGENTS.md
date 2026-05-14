@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-13
+Last updated: 2026-05-14
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -23,7 +23,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.3.02"`)
+  - Software version (`sw_version = "2.3.03"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -121,7 +121,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-13: Updated version to 2.3.02. Modified dictDataIntegration.py to include comprehensive default test steps (DEFAULT_TEST_STEPS_PACMAN5) for automated report processing, including column highlighting, fault population, version validation, and event highlighting. Added detailed LIN error dictionary and TDM status mappings. Updated version_info.txt to reflect new version (2, 3, 2, 0).
+- 2026-05-14: Updated version to 2.3.03. Modified dictDataIntegration.py to include comprehensive default test steps (DEFAULT_TEST_STEPS_PACMAN5) for automated report processing, including column highlighting, fault population, version validation, and event highlighting. Added detailed LIN error dictionary and TDM status mappings. Updated version_info.txt to reflect new version (2, 3, 3, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
