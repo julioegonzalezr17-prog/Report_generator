@@ -993,7 +993,7 @@ class AnalysisWindow(QMainWindow):
         total_tests = self.table_model.rowCount()
         analyzed_tests = len(self.test_results)
         
-        if analyzed_tests < 1: # No of tests with results vs total tests in the table
+        if analyzed_tests < total_tests: # No of tests with results vs total tests in the table
             QMessageBox.warning(
                 self,
                 "Incomplete Analysis",

@@ -27,7 +27,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.5.00"`)
+  - Software version (`sw_version = "2.6.00"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -131,7 +131,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-18: Updated version to 2.5.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 5, 0, 0).
+- 2026-05-18: Updated version to 2.6.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 6, 0, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -270,7 +270,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.5.00"` | Application version |
+| `sw_version` | `"2.6.00"` | Application version |
 | `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |
