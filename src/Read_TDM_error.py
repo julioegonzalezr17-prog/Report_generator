@@ -3,131 +3,170 @@ import pandas as pd
 from typing import Dict, Any
 import logging
 
-
-# Cache to avoid reading the same file multiple times
-# cache[path] = { fault_code: { "FAULT NAME": ..., "ERROR LIST NAME FOR MANUAL": ... } }
 _tdm_cache: Dict[str, Dict[int, Dict[str, Any]]] = {}
+
 logger = logging.getLogger(__name__)
 
 
-def load_tdm_once(xlsx_path: str, header_row: int ) -> Dict[int, Dict[str, str]]:
-    """
-    Read the XLSX file only once, extract the 'TDM' sheet and build a dictionary
-    keyed by FAULT CODE. If called again with the same path, cached data is reused.
+# ============================================
+# 🔧 CLEAN FAULT NAME
+# ============================================
+def clean_fault_name(value: str) -> str:
+    if not isinstance(value, str):
+        return ""
 
-    Parameters:
-        xlsx_path: path to the Excel file
-        header_row: 1-based row number where the header is located (default: 5)
+    value = value.strip()
 
-    Returns a dictionary:
-        {
-            fault_code: {
-                "FAULT NAME": str,
-                "ERROR LIST NAME FOR MANUAL": str
-            },
-            ...
-        }
-    """
+    # Remove CELL-based path strings
+    if "]" in value:
+        value = value.split("]")[-1]
+
+    return value.strip()
+
+
+# ============================================
+# ✅ MAIN FUNCTION (FULL COMPATIBLE)
+# ============================================
+def load_tdm_once(xlsx_path: str, header_row: int) -> Dict[int, Dict[str, str]]:
+
     logger.info("Reading TDM fault file: %s", xlsx_path)
+
+    # ✅ CACHE
+    if xlsx_path in _tdm_cache:
+        return _tdm_cache[xlsx_path]
+
     try:
-        # Return from cache if available
-        if xlsx_path in _tdm_cache:
-            return _tdm_cache[xlsx_path]
+        xl = pd.ExcelFile(xlsx_path, engine="openpyxl")
 
-        # Open the Excel file
-        try:
-            xl = pd.ExcelFile(xlsx_path, engine="openpyxl")
-        except PermissionError as e:
-            raise PermissionError(
-                f"Cannot open file '{xlsx_path}'. Check permissions the file is locked by OneDrive or Excel. Original: {e}"
-            )
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f"File not found: {xlsx_path}") from e
-
-        # Normalization helper to find the TDM sheet
+        # =========================
+        # FIND TDM SHEET
+        # =========================
         def norm(s):
             return " ".join(str(s).strip().upper().split())
 
-        # Find the TDM sheet (tolerant search)
         tdm_sheet = None
         for sheet in xl.sheet_names:
-            if norm(sheet) == "TDM" or norm(sheet).startswith("TDM"):
+            if norm(sheet).startswith("TDM"):
                 tdm_sheet = sheet
                 break
 
-        if tdm_sheet is None:
-            logger.info("TDM sheet %s not found in ", tdm_sheet, xlsx_path)
+        if not tdm_sheet:
             raise ValueError(f"TDM sheet not found in {xlsx_path}")
 
-        # Determine the 0-based header index for pandas (user passes 1-based row)
         header_index = max(0, header_row - 1)
 
-        # Read the TDM sheet using the specified header row
-        df = pd.read_excel(xl, sheet_name=tdm_sheet, engine="openpyxl", header=header_index)
+        df = pd.read_excel(
+            xl,
+            sheet_name=tdm_sheet,
+            engine="openpyxl",
+            header=header_index
+        )
 
-        # Normalize column names
+        # ✅ NORMALIZE COLUMNS
         df.columns = [norm(c) for c in df.columns]
+        logger.info("Columns detected: %s", list(df.columns))
 
-        # Required columns
-        required_cols = ["FAULT CODE", "FAULT NAME", "ERROR LIST NAME FOR MANUAL"]
-        for c in required_cols:
-            if c not in df.columns:
-                logger.info(f"Missing required column: {c}")
-                raise ValueError(f"Missing required column: {c}")
+        # =========================
+        # ✅ DETECT FAULT CODE
+        # =========================
+        if "FAULT CODE" not in df.columns:
+            raise ValueError("Missing FAULT CODE column")
 
-        # Convert FAULT CODE to integer
-        df["FAULT CODE"] = pd.to_numeric(df["FAULT CODE"], errors="coerce").astype("Int64")
+        # =========================
+        # ✅ DETECT FAULT NAME (KEY LOGIC)
+        # =========================
+        fault_name_col = None
+
+        # ✅ PRIORITY 1 → exact old format
+        if "FAULT NAME" in df.columns:
+            fault_name_col = "FAULT NAME"
+
+        # ✅ PRIORITY 2 → detect dynamic column (new Excel)
+        if fault_name_col is None:
+            for col in df.columns:
+
+                if col == "FAULT CODE":
+                    continue
+
+                # detect path-like headers
+                if ("\\" in col or "/" in col or "[" in col):
+                    fault_name_col = col
+                    break
+
+        # ✅ PRIORITY 3 → fallback: first non FAULT CODE column
+        if fault_name_col is None:
+            for col in df.columns:
+                if col != "FAULT CODE":
+                    fault_name_col = col
+                    break
+
+        if fault_name_col is None:
+            raise ValueError("Could not detect FAULT NAME column")
+
+        logger.info("Using FAULT NAME column: %s", fault_name_col)
+
+        # =========================
+        # ✅ MANUAL COLUMN (OPTIONAL)
+        # =========================
+        if "ERROR LIST NAME FOR MANUAL" not in df.columns:
+            logger.warning("Missing manual column → using empty")
+            df["ERROR LIST NAME FOR MANUAL"] = ""
+
+        # =========================
+        # ✅ CLEAN DATA
+        # =========================
+        df[fault_name_col] = df[fault_name_col].apply(clean_fault_name)
+
+        # =========================
+        # ✅ FAULT CODE CLEAN
+        # =========================
+        df["FAULT CODE"] = pd.to_numeric(df["FAULT CODE"], errors="coerce")
         df = df.dropna(subset=["FAULT CODE"])
 
-        # Handle duplicates:
-        # - If a fault code has 2 or more rows, accept up to two distinct values
-        #   and concatenate them (preserving original order) for both FAULT NAME
-        #   and ERROR LIST NAME FOR MANUAL.
-        # - If a fault code has 1 row, keep its values as-is.
+        # =========================
+        # ✅ GROUP LOGIC
+        # =========================
         cleaned_records = []
+
         for code, sub in df.groupby("FAULT CODE"):
-            # preserve the order of appearance
+
             names = []
             manuals = []
+
             for _, r in sub.iterrows():
-                n = str(r["FAULT NAME"]).strip()
+
+                n = str(r[fault_name_col]).strip()
                 m = str(r["ERROR LIST NAME FOR MANUAL"]).strip()
-                if n not in names:
+
+                if n and n not in names:
                     names.append(n)
-                if m not in manuals:
+
+                if m and m not in manuals:
                     manuals.append(m)
 
-            # Take up to the first two distinct values
-            combined_name = " | ".join(names[:2]) if names else ""
-            combined_manual = " | ".join(manuals[:2]) if manuals else ""
-
-            # Build a single representative row for this fault code
             cleaned_records.append({
                 "FAULT CODE": int(code),
-                "FAULT NAME": combined_name,
-                "ERROR LIST NAME FOR MANUAL": combined_manual,
+                "FAULT NAME": " | ".join(names[:2]) if names else "",
+                "ERROR LIST NAME FOR MANUAL": " | ".join(manuals[:2]) if manuals else "",
             })
 
-        # Rebuild dataframe from cleaned records
-        df = pd.DataFrame(cleaned_records)
-        if not df.empty:
-            df["FAULT CODE"] = pd.to_numeric(df["FAULT CODE"], errors="coerce").astype("Int64")
-        else:
-            df = pd.DataFrame(columns=["FAULT CODE", "FAULT NAME", "ERROR LIST NAME FOR MANUAL"]) 
-
-        # Build final mapping
+        # =========================
+        # ✅ BUILD FINAL DICT
+        # =========================
         mapping: Dict[int, Dict[str, str]] = {}
-        for _, row in df.iterrows():
-            code = int(row["FAULT CODE"])
-            mapping[code] = {
-                "FAULT NAME": str(row["FAULT NAME"]).strip(),
-                "ERROR LIST NAME FOR MANUAL": str(row["ERROR LIST NAME FOR MANUAL"]).strip(),
+
+        for row in cleaned_records:
+            mapping[row["FAULT CODE"]] = {
+                "FAULT NAME": row["FAULT NAME"],
+                "ERROR LIST NAME FOR MANUAL": row["ERROR LIST NAME FOR MANUAL"],
             }
 
-        # Save to cache
         _tdm_cache[xlsx_path] = mapping
-        logger.debug("TDM fault list succesfully loaded, dictionary crated")
+
+        logger.info("TDM mapping loaded ✅")
+
         return mapping
+
     except Exception:
-        logger.exception("ERROR analizing: %s", xlsx_path)
+        logger.exception("ERROR analyzing TDM file: %s", xlsx_path)
         raise

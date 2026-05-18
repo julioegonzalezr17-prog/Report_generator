@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QWidget, QCheckBox, QGroupBox,
     QLineEdit, QTextEdit, QFileDialog
 )
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Qt
 from openpyxl import load_workbook
 from datetime import datetime
@@ -368,6 +368,7 @@ class BugReportWindow(QDialog):
         # =========================
         # SAVE
         # =========================
+        ws.freeze_panes = "A2"
         wb.save(self.buglist_path)
 
     

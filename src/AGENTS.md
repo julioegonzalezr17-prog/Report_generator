@@ -17,13 +17,17 @@ Multi-window interface orchestration:
 - **`UI_report.py`**: 
   - `StartWindow` - Second window, collects file inputs (report config XLSX, TDM error dict XLSX, TDM config CSV, TDM log CSV).
   - `AnalysisWindow` - Main analysis window with test table and per-row actions.
+  - Launches `UI_buglist.py` and `UI_BugReport.py` for bug selection and reporting.
+  - Uses `lin_to_excel.py` and `modbus_to_excel.py` to convert CSV logs into Excel files.
+- **`UI_buglist.py`**: `BugSelectionWindow` - Dialog for selecting tests with bugs and preparing bug report data.
+- **`UI_BugReport.py`**: `BugReportWindow` - Dialog for generating bug reports from selected tests and external buglist files.
 - **`UI_standaloneReport.py`**: `StartWindow` - Alternative UI for standalone test reports.
 - **`UI_update_RDP.py`** - Window for updating RDP reports.
 - **`UI_user_fail_validation.py`**: `ValidationWindow` - Validation/error display window.
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.4.00"`)
+  - Software version (`sw_version = "2.5.00"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -35,6 +39,8 @@ Multi-window interface orchestration:
 - **`TDM_config_load.py`** - Loads DGTO configuration from CSV with encoding/separator fallback.
 - **`Read_TDM_error.py`** - Loads fault dictionary from TDM XLSX with in-memory caching.
 - **`Read_TDM_report.py`** - Parses custom TDM report CSV format and can export to Excel.
+- **`lin_to_excel.py`** - Converts LIN CSV logs into cleaned Excel workbooks for analysis.
+- **`modbus_to_excel.py`** - Converts Modbus CSV logs into cleaned Excel workbooks and normalizes timestamps.
 
 ### Report Processing
 - **`fill_RDP_report.py`** - Fills RDP (Report Data Process) report templates:
@@ -114,8 +120,10 @@ SelectionWindow (UI_selection.py)
 | **Load_configuration_test.py** | Parse test definition XLSX → test config dict |
 | **TDM_config_load.py** | Parse TDM config CSV → DGTO configuration dict |
 | **Read_TDM_error.py** | Load TDM error/fault XLSX → fault code dict (cached) |
-| **Read_TDM_report.py** | Parse custom TDM report CSV format || **lin_to_excel.py** | Convert LIN CSV logs to Excel workbooks with fill and formatting support. |
-| **modbus_to_excel.py** | Convert Modbus CSV logs to Excel workbooks with fill and timestamp normalization. || **fill_RDP_report.py** | Fill Excel templates with styling, colors, protection |
+| **Read_TDM_report.py** | Parse custom TDM report CSV format |
+| **lin_to_excel.py** | Convert LIN CSV logs to Excel workbooks with fill and formatting support. |
+| **modbus_to_excel.py** | Convert Modbus CSV logs to Excel workbooks with fill and timestamp normalization. |
+| **fill_RDP_report.py** | Fill Excel templates with styling, colors, protection |
 | **Read_report_file.py** | Report file parsing utilities |
 | **step_engine.py** | Execute JSON step actions; coordinate ExcelStyler |
 | **json_motor.py** | Default step catalog; normalization helpers |
@@ -123,7 +131,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-18: Updated version to 2.4.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 4, 0, 0).
+- 2026-05-18: Updated version to 2.5.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 5, 0, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -262,7 +270,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.4.00"` | Application version |
+| `sw_version` | `"2.5.00"` | Application version |
 | `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |
