@@ -99,6 +99,14 @@ class UpdateRDP(QDialog):
                 "Please fill the following fields:\n- " + "\n- ".join(missing)
             )
             return False
+        ext = os.path.splitext(data["report_config"])[1].lower()
+        if ext not in [".xlsx", ".xls"]:
+                QMessageBox.warning(
+                    self,
+                    "Invalid file type",
+                    f"The file must be an Excel file (.xlsx or .xls):\n{data['report_config']}"
+                )
+                return
         return True
 
     def _format_version_value(self, version_value: Any) -> str:
@@ -147,7 +155,7 @@ class UpdateRDP(QDialog):
             )
             return
 
-        data_path = Path(self.user_input["report_file"]).parent.parent     
+        self.data_path = Path(self.user_input["report_file"]).parent.parent     
         header_data = self._build_header_data()
         
         # Call update_excel_template
@@ -155,7 +163,7 @@ class UpdateRDP(QDialog):
             fill_RDP_report.update_excel_template(
                 template_path=template_path,
                 output_path=None,
-                data_path=str(data_path),
+                data_path=str(self.data_path),
                 header_data=header_data,
                 tests=self.test_summary
             )

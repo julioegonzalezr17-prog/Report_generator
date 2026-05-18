@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-14
+Last updated: 2026-05-18
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -23,7 +23,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.3.03"`)
+  - Software version (`sw_version = "2.4.00"`)
   - Test types: `Standalone test`, `Integration test`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -103,7 +103,9 @@ SelectionWindow (UI_selection.py)
 | Module | Purpose |
 |--------|---------|
 | **UI_selection.py** | First UI window; test mode & inverter selection |
-| **UI_report.py** | StartWindow (file input) + AnalysisWindow (main table, actions). Validates all tests analyzed before RDP update. |
+| **UI_report.py** | StartWindow (file input) + AnalysisWindow (main table, actions). Validates all tests analyzed before RDP update, launches bug selection/report dialogs, and converts LIN/Modbus logs to Excel. |
+| **UI_buglist.py** | `BugSelectionWindow` dialog for selecting tests with bugs and preparing bug report data. |
+| **UI_BugReport.py** | `BugReportWindow` dialog for generating bug reports from selected tests and external buglist files. |
 | **UI_standaloneReport.py** | Alternative UI for standalone test workflows |
 | **UI_update_RDP.py** | Update/modify RDP report templates. Builds `header_data` from `StartWindow` values and passes `tests` summary to `fill_RDP_report.update_excel_template`. |
 | **UI_user_fail_validation.py** | Validation error display window |
@@ -112,8 +114,8 @@ SelectionWindow (UI_selection.py)
 | **Load_configuration_test.py** | Parse test definition XLSX → test config dict |
 | **TDM_config_load.py** | Parse TDM config CSV → DGTO configuration dict |
 | **Read_TDM_error.py** | Load TDM error/fault XLSX → fault code dict (cached) |
-| **Read_TDM_report.py** | Parse custom TDM report CSV format |
-| **fill_RDP_report.py** | Fill Excel templates with styling, colors, protection |
+| **Read_TDM_report.py** | Parse custom TDM report CSV format || **lin_to_excel.py** | Convert LIN CSV logs to Excel workbooks with fill and formatting support. |
+| **modbus_to_excel.py** | Convert Modbus CSV logs to Excel workbooks with fill and timestamp normalization. || **fill_RDP_report.py** | Fill Excel templates with styling, colors, protection |
 | **Read_report_file.py** | Report file parsing utilities |
 | **step_engine.py** | Execute JSON step actions; coordinate ExcelStyler |
 | **json_motor.py** | Default step catalog; normalization helpers |
@@ -121,7 +123,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-14: Updated version to 2.3.03. Modified dictDataIntegration.py to include comprehensive default test steps (DEFAULT_TEST_STEPS_PACMAN5) for automated report processing, including column highlighting, fault population, version validation, and event highlighting. Added detailed LIN error dictionary and TDM status mappings. Updated version_info.txt to reflect new version (2, 3, 3, 0).
+- 2026-05-18: Updated version to 2.4.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 4, 0, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -185,6 +187,10 @@ src/
 ├── UI_standaloneReport.py          # Standalone test UI
 ├── UI_update_RDP.py                # RDP report update
 ├── UI_user_fail_validation.py      # ValidationWindow (error display)
+├── UI_buglist.py                   # Bug selection dialog
+├── UI_BugReport.py                 # Bug report dialog
+├── lin_to_excel.py                 # LIN CSV → Excel helper
+├── modbus_to_excel.py              # Modbus CSV → Excel helper
 ├── dictDataIntegration.py          # Shared config & constants
 ├── fill_RDP_report.py              # Excel template filling & styling
 ├── Read_report_file.py             # Report parsing utilities
@@ -239,6 +245,10 @@ main_UI.py
                     ├── TDM_config_load.py
                     ├── Read_TDM_error.py
                     ├── Read_TDM_report.py
+                    ├── UI_buglist.py
+                    ├── UI_BugReport.py
+                    ├── lin_to_excel.py
+                    ├── modbus_to_excel.py
                     ├── step_engine.py
                     │   └── json_motor.py
                     │       └── ExcelStyler.py
@@ -252,7 +262,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.3.00"` | Application version |
+| `sw_version` | `"2.4.00"` | Application version |
 | `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |

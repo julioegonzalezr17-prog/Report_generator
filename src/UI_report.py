@@ -26,6 +26,9 @@ from dictDataIntegration import (inverter,
 import logging
 import UI_user_fail_validation
 import UI_update_RDP
+from pprint import pprint
+import UI_buglist
+import UI_BugReport
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +67,23 @@ class StartWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Test Analysis Setup " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/info_icon.png"))
-        self.setMinimumSize(500, 300)
+        self.setMinimumSize(700, 700)
+        self.setStyleSheet("""
+            QWidget {
+                font-size: 14px;
+            }
+            QPushButton {
+                min-height: 30px;
+                padding: 8px 16px;
+                background-color: #2d89ef;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #1b5fbd;
+            }
+        """)
 
         # ---- Widgets ----
         # Report configuration
@@ -189,6 +208,8 @@ class StartWindow(QMainWindow):
         self.TDM.addWidget(self.TDMZ)
 
         # User Name
+        self.rdp_data = QLineEdit()
+        self.rdp_data.setPlaceholderText("Enter RDP number ...")
         self.requester_name = QLineEdit()
         self.requester_name.setPlaceholderText("Requested by ...")
         self.tester_name = QLineEdit()
@@ -214,6 +235,7 @@ class StartWindow(QMainWindow):
         form.addRow("Inverter PFC Vxx.Tyy*", self.inverter_PFC)
         form.addRow("Control Board XX.YY.ZZ*", self.CB)
         form.addRow("TDM Version XX.YY.ZZ*", self.TDM)
+        form.addRow("RDP number*", self.rdp_data)
         form.addRow("Requested By*", self.requester_name)
         form.addRow("Tester Name*", self.tester_name)
         form.addRow("Notes", self.notes)
@@ -467,6 +489,7 @@ class StartWindow(QMainWindow):
             "tdm_version": [self.TDMX.text().strip(),
                             self.TDMY.text().strip(),
                             self.TDMZ.text().strip()],
+            "rdp_number": self.rdp_data.text().strip(),
             "requester_name": self.requester_name.text().strip(),
             "tester_name": self.tester_name.text().strip(),
             "notes": self.notes.toPlainText().strip()            
@@ -546,6 +569,8 @@ class StartWindow(QMainWindow):
             if element.isEnabled():
                 if not data["tdm_version"][i]:
                     missing.append("TDM Version")
+        if not data["rdp_number"]:
+            missing.append("RDP Number")
         if not data["requester_name"]:
             missing.append("Requester Name")
         if not data["tester_name"]:
@@ -860,6 +885,11 @@ class AnalysisWindow(QMainWindow):
         self.user_data = initial_data
         self.temp_json_path = temp_json_path
         self.test_results = {}  # Dictionary to store analysis results by test number
+        self.test_full_info = {}  # Dictionary to store full test info by test number
+        self.test_full_info["report_data"] = initial_data
+        self.test_full_info["Test"] = {}
+        self.rdp_info = {}  # Dictionary to store info needed for RDP report    
+
         self.setWindowTitle("Test Analysis " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/monitoring.png"))
         self.setMinimumSize(700, 400)
@@ -921,9 +951,18 @@ class AnalysisWindow(QMainWindow):
         btn_RDP.setMinimumSize(120, 40)
         btn_RDP.setMaximumSize(200, 60)
         btn_RDP.clicked.connect(self.update_RDP_clicked)
+        self.btn_BUG = QPushButton("Update BUG List")        
+        self.btn_BUG.setMinimumSize(120, 40)
+        self.btn_BUG.setMaximumSize(200, 60)
+        self.btn_BUG.clicked.connect(lambda: self.update_bug_report(info_state))
+        self.btn_BUG.setEnabled(False)  # Disabled until RDP path is set in test_full_info
+
+        buttons_mod_layout = QHBoxLayout()
+        buttons_mod_layout.addWidget(btn_RDP)
+        buttons_mod_layout.addWidget(self.btn_BUG)
 
         info_RDP = QVBoxLayout()
-        info_RDP.addWidget(btn_RDP)
+        info_RDP.addLayout(buttons_mod_layout)
         info_RDP.addWidget(info_state)
 
         info_logo = QHBoxLayout()
@@ -977,9 +1016,7 @@ class AnalysisWindow(QMainWindow):
             if result_widget and hasattr(result_widget, '_test_result'):
                 test_result = result_widget._test_result
             else:
-                test_result = "UNKNOWN"
-            
-
+                test_result = "UNKNOWN"        
             tests.append({
                 "num": test_num,
                 "desc": test_desc,
@@ -988,7 +1025,32 @@ class AnalysisWindow(QMainWindow):
             })
 
         update_windows = UI_update_RDP.UpdateRDP(self.user_data, tests)
-        update_windows.exec_()
+        
+        update_windows.exec_()     
+        path = update_windows.data_path
+        if path:
+            self.test_full_info["RDP_path"] = str(path)    
+        if "RDP_path" in self.test_full_info and self.test_full_info["RDP_path"]:
+            self.btn_BUG.setEnabled(True)
+        else:
+            self.btn_BUG.setEnabled(False)
+        return
+    
+    def update_bug_report(self,info_text: QLabel):
+        pprint(self.test_full_info,width=120)
+        update_bug = UI_buglist.BugSelectionWindow(self.test_full_info)
+        
+        if update_bug.exec_():
+            if update_bug.get_updated_data() is not None:
+                updated_data = update_bug.get_updated_data()
+        else:
+            self.write_info_data(info_text,None," ❌ Bug review canceled")
+            return
+        update_report = UI_BugReport.BugReportWindow(updated_data)
+        if update_report.exec_():  
+            self.write_info_data(info_text,None," ✅ Bug report generated successfully") 
+        else:
+            self.write_info_data(info_text,None," ❌ Bug report generation failed")
         return
 
     def create_path_selector_cell(self)-> QWidget:
@@ -1512,6 +1574,9 @@ class AnalysisWindow(QMainWindow):
         self.write_info_data(info_text,None," If test result (✅, ❌) is not shown click again the Analysis button.")
         data_to_report = self.write_result_cell(Index, updated_data)
         logger.debug("Test validation results: %s", data_to_report)
+
+
+
         if self.user_data["machine_model"] == "Pacman 5":
             data_print_report = {"TDM log" : test_excel,
                                 "Modbus Log": path_mod_text,
@@ -1523,7 +1588,12 @@ class AnalysisWindow(QMainWindow):
                                 "Modbus Log": path_mod_text,
                                 "Analysis": data_to_report,
                                 "Supporting Data": plot_path}
-        print("Data to report:", data_print_report)
+        
+        #test_scope = self.table_model.data(self.table_model.index(row, 2)) or ""  # TEST SCOPE
+        self.test_full_info["Test"][str(test_und_eva)] = {"data_print_report": data_print_report,
+                                                "test_scope": self.table_model.data(self.table_model.index(Index.row(), 2)) or "",
+                                                "Notes Technology": "",
+                                                "BUG": ""}
         ouput_path = Read_report_file.modify_excel_with_headers(self.user_data["report_file"],
                                                     data_print_report,
                                                     test_und_eva)
@@ -1602,6 +1672,7 @@ class AnalysisWindow(QMainWindow):
             return "_".join(padded)
         return (
             "<b>Session data received:</b><br>"
+            f"- RDP Number: {d.get('rdp_number', '')}<br>"
             f"- Test requested by: {d.get('requester_name', '')}<br>"
             f"- Tester Name: {d.get('tester_name', '')}<br>"
             f"- Machine model: {d.get('machine_model', '')}<br>"
