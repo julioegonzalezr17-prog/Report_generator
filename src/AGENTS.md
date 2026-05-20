@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-18
+Last updated: 2026-05-20
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -21,14 +21,15 @@ Multi-window interface orchestration:
   - Uses `lin_to_excel.py` and `modbus_to_excel.py` to convert CSV logs into Excel files.
 - **`UI_buglist.py`**: `BugSelectionWindow` - Dialog for selecting tests with bugs and preparing bug report data.
 - **`UI_BugReport.py`**: `BugReportWindow` - Dialog for generating bug reports from selected tests and external buglist files.
+- **`UI_bugGenerator.py`**: `BugReportGenerator` - Window for generating PDF bug reports from Excel bug lists.
 - **`UI_standaloneReport.py`**: `StartWindow` - Alternative UI for standalone test reports.
 - **`UI_update_RDP.py`** - Window for updating RDP reports.
 - **`UI_user_fail_validation.py`**: `ValidationWindow` - Validation/error display window.
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.6.00"`)
-  - Test types: `Standalone test`, `Integration test`
+  - Software version (`sw_version = "2.7.00"`)
+  - Test types: `Standalone test`, `Integration test`, `Bug report`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
   - LIN error dictionary (codes 0-21 with names and types)
@@ -131,7 +132,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-18: Updated version to 2.6.00. Modified dictDataIntegration.py to reflect current project state and version. Updated version_info.txt to reflect new version (2, 6, 0, 0).
+- 2026-05-20: Updated version to 2.7.00. Added `UI_bugGenerator.py` for PDF bug report generation and synchronized project metadata. Updated version_info.txt to reflect new version (2, 7, 0, 0).
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -197,6 +198,7 @@ src/
 ├── UI_user_fail_validation.py      # ValidationWindow (error display)
 ├── UI_buglist.py                   # Bug selection dialog
 ├── UI_BugReport.py                 # Bug report dialog
+├── UI_bugGenerator.py              # Bug report PDF generator
 ├── lin_to_excel.py                 # LIN CSV → Excel helper
 ├── modbus_to_excel.py              # Modbus CSV → Excel helper
 ├── dictDataIntegration.py          # Shared config & constants
@@ -270,8 +272,8 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.6.00"` | Application version |
-| `test_type` | `["Standalone test", "Integration test"]` | Test mode selection |
+| `sw_version` | `"2.7.00"` | Application version |
+| `test_type` | `['Standalone test', 'Integration test', 'Bug report']` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |
 | `header_default_table` | Machine-specific list | UI table column headers |

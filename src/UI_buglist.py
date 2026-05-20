@@ -168,8 +168,16 @@ class BugSelectionWindow(QDialog):
     # TEST LIST ✅
     # =================================================
     def _create_test_list(self):
+        
         container = QWidget()
+
+        font = container.font()
+        if font.pointSize() <= 0:
+            font.setPointSize(10)
+        container.setFont(font)
+
         layout = QVBoxLayout(container)
+
 
         for test_id, test_data in self.tests_dict.items():
 

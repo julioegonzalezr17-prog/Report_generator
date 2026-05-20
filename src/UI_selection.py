@@ -8,6 +8,7 @@ from dictDataIntegration import (sw_version, test_type)
 import logging
 import UI_report
 import UI_standaloneReport
+import UI_bugGenerator   
 
 
 logger = logging.getLogger(__name__)
@@ -68,9 +69,12 @@ class SelectionWindow(QMainWindow):
         self.img_label = QLabel()
         self.pixmap_standalone = QPixmap(":/standalone_image.png") 
         self.pixmap_integration = QPixmap(":/integration_image.png") 
-        self.img_label.setPixmap(self.pixmap_standalone.scaled(self.img_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.img_label.setScaledContents(True) 
+        self.pixmap_bugreport = QPixmap(":/bug_image.png")
+        self.img_label.setScaledContents(True)
         self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding) 
+        self.img_label.setFixedSize(300, 200)
+        self.img_label.setAlignment(Qt.AlignCenter)
+        self.img_label.setPixmap(self.pixmap_standalone)
         self.combo_machine.currentTextChanged.connect(lambda text: self.show_image(text))
 
         # Container full sceen
@@ -86,20 +90,52 @@ class SelectionWindow(QMainWindow):
         self.btn_ok.clicked.connect(self.on_ok_clicked)
         self.btn_cancel.clicked.connect(self.close)
 
-    def show_image(self, test_type:str):
+
+    def show_image(self, test_type: str):
+
         if test_type == "Standalone test":
-            self.img_label.setPixmap(self.pixmap_standalone)
+            self.img_label.setScaledContents(True)
+            self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding) 
+            pix = self.pixmap_standalone
+            if not pix.isNull():
+                scaled = pix.scaled(
+                    self.img_label.size(),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.img_label.setPixmap(scaled)
+        elif test_type == "Integration test":
+            pix = self.pixmap_integration
+            if not pix.isNull():
+                scaled = pix.scaled(
+                    self.img_label.size(),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.img_label.setPixmap(scaled)
+                self.img_label.setScaledContents(True)
+                self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         else:
-            self.img_label.setPixmap(self.pixmap_integration)
+            self.img_label.setFixedSize(300, 200)
+            self.img_label.setAlignment(Qt.AlignCenter)
+            self.img_label.setPixmap(self.pixmap_bugreport)
+        
+
+            
     def on_ok_clicked (self):
         if self.combo_machine.currentText() == "Standalone test":
-            win = UI_standaloneReport.StartWindow()
-            win.show()  
+            self.win = UI_standaloneReport.StartWindow()
+            self.win.show()  
             logger.info("Opening Standalone analysis app")
             self.close()
-        else:
-            win = UI_report.StartWindow()
-            win.show() 
+        elif self.combo_machine.currentText() == "Integration test":
+            self.win = UI_report.StartWindow()
+            self.win.show()
             logger.info("Opening Integration analysis app")
+            self.close()
+        else:
+            self.win = UI_bugGenerator.BugReportGenerator()
+            self.win.show()
+            logger.info("Opening Bug report app")
             self.close()
         return

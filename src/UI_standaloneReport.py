@@ -28,11 +28,6 @@ logger = logging.getLogger(__name__)
 class StartWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        """
-    First window: collects test input data and opens AnalysisWindow.
-    """
-    def __init__(self):
-        super().__init__()
         self.setWindowTitle("Test Analysis Setup " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/info_icon.png"))
         self.setMinimumSize(500, 300)

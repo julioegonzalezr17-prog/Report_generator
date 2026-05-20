@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
 import magic_logger
 import logging
+from PySide6.QtCore import qInstallMessageHandler
 
 
 # code create exe -> pyinstaller --noconsole --onefile --icon=iconos/app_imag.ico --add-data "iconos;iconos" --collect-all PySide6 src/main_UI.py
@@ -30,6 +31,15 @@ def main():
     logger.info("Starting app: %s", log_file)
     logger.debug("Debug check")
     logger.error("Error check")
+    def qt_message_handler(mode, context, message):
+        if "QFont::setPointSize" in message:
+            return  # ignorar este warning
+        print(message)
+
+    qInstallMessageHandler(qt_message_handler)
+
+    
+
 
     import UI_selection 
     #import UI_user_fail_validation

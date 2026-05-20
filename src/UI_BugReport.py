@@ -2,8 +2,8 @@ import pandas as pd
 import copy
 from PySide6.QtWidgets import (
     QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-    QScrollArea, QWidget, QCheckBox, QGroupBox,
-    QLineEdit, QTextEdit, QFileDialog
+    QScrollArea, QWidget, QCheckBox, QComboBox,
+    QLineEdit, QTextEdit, QFileDialog, QMessageBox
 )
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Qt
@@ -62,15 +62,15 @@ class BugReportWindow(QDialog):
             }
         """)
 
-        font = QFont()
-        font.setPointSize(12)
-        self.setFont(font)
 
         # =================================================
         # Bug inputs
         # =================================================
         self.title_input = QLineEdit()
         self.title_input.setPlaceholderText("Short bug name")
+
+        self.priority_input = QComboBox()
+        self.priority_input.addItems(["Low", "Medium", "High"])
 
         self.description_input = QTextEdit()
         self.description_input.setPlaceholderText("Bug description / Notes Technology")
@@ -112,6 +112,9 @@ class BugReportWindow(QDialog):
 
         main.addWidget(QLabel("<b>Bug Name*</b>"))
         main.addWidget(self.title_input)
+
+        main.addWidget(QLabel("<b>Bug Priority*</b>"))
+        main.addWidget(self.priority_input)
 
         main.addWidget(QLabel("<b>Bug Description (Notes Technology)*</b>"))
         main.addWidget(self.description_input)
@@ -176,9 +179,15 @@ class BugReportWindow(QDialog):
     # Build existing bug list UI
     # =================================================
     def _update_bug_list_ui(self, bugs):
+        
         container = QWidget()
-        layout = QVBoxLayout(container)
 
+        font = container.font()
+        if font.pointSize() <= 0:
+            font.setPointSize(10)
+        container.setFont(font)
+
+        layout = QVBoxLayout(container)
         if not bugs:
             lbl = QLabel("No existing bugs found for this machine ✅")
             lbl.setStyleSheet("color: green;")
@@ -198,6 +207,25 @@ class BugReportWindow(QDialog):
     # =================================================
     def _on_update(self):
         if not self.buglist_path:
+            QMessageBox.warning(
+                self,
+                "No bugs list file",
+                "Please select a bug list Excel file to proceed."
+            )
+            return
+        if not self.title_input.text().strip():
+            QMessageBox.warning(
+                self,
+                "Missing bug name",
+                "Please enter a short name for the bug to proceed."
+            )
+            return
+        if not self.description_input.toPlainText().strip():
+            QMessageBox.warning(
+                self,
+                "Missing bug description",
+                "Please enter a description for the bug to proceed."
+            )
             return
 
         self._append_bug_to_excel()
@@ -299,6 +327,7 @@ class BugReportWindow(QDialog):
 
         write("Test scope", "\n".join(test_scope_text))
         write("Test result", "\n\n".join(test_result_text))
+        write("Priority", self.priority_input.currentText())
         
         write("Notes Technology", self.description_input.toPlainText())
 
@@ -353,12 +382,22 @@ class BugReportWindow(QDialog):
 
         RED_FILL = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
         GREEN_FILL = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+        YELLOW_FILL = PatternFill(start_color="FFFFEB9C",end_color="FFFFEB9C",fill_type="solid")        
+        ORANGE_FILL = PatternFill(start_color="FFF4B084",end_color="FFF4B084",fill_type="solid")
+
 
         for col in range(1, ws.max_column + 1):
             cell = ws.cell(row=new_row_idx, column=col)
             cell.border = thin_border
 
             # ✅ COLOR STATUS
+            if col == headers.get("Priority"):
+                if self.priority_input.currentText() == "High":
+                    cell.fill = RED_FILL
+                elif self.priority_input.currentText() == "Medium":
+                    cell.fill = ORANGE_FILL
+                elif self.priority_input.currentText() == "Low":
+                    cell.fill = YELLOW_FILL
             if col == headers.get("Status"):
                 if cell.value == "OPEN":
                     cell.fill = RED_FILL

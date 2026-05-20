@@ -7,10 +7,24 @@ from pprint import pprint
 # IMPORTA TU VENTANA
 from UI_buglist import BugSelectionWindow
 from UI_BugReport import BugReportWindow
+from PySide6.QtCore import qInstallMessageHandler
 # ↑ ajusta el nombre del archivo si es distinto
 
 
 def main():
+
+    
+
+    def qt_message_handler(mode, context, message):
+        if "QFont::setPointSize" in message:
+            return  # ignorar este warning
+        print(message)
+
+    qInstallMessageHandler(qt_message_handler)
+
+
+    
+
     # -----------------------------
     # Fake test data (mock)
     # -----------------------------
