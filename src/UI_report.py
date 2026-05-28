@@ -132,6 +132,10 @@ class StartWindow(QMainWindow):
         self.combo_machine.currentTextChanged.connect(lambda text: self.update_inverter_list(text))
         self.combo_inverter.currentTextChanged.connect(lambda text: self.version_selection(text))
 
+        # TDM model
+        self.combo_TDM = QComboBox()
+        self.combo_TDM.addItems(["TDM 4", "TDM 3"])
+
         # EEPROM
         self.inverter_eepromX = QLineEdit()
         self.inverter_eepromX.setPlaceholderText("Vxx")
@@ -229,6 +233,7 @@ class StartWindow(QMainWindow):
         form.addRow("Report File*", self.report_file_row)
         form.addRow("Machine model", self.combo_machine)
         form.addRow("Inverter model", self.combo_inverter)
+        form.addRow("TDM model", self.combo_TDM)
         form.addRow("Inverter EEPROM Vxx.Tyy*", self.inverter_EPR)
         form.addRow("Inverter DSP Vxx.Tyy.zz*", self.inverter_DSP)
         form.addRow("Inverter ARM Vxx.Tyy*", self.inverter_ARM)
@@ -474,6 +479,7 @@ class StartWindow(QMainWindow):
             "report_file": self.report_file.text().strip(),
             "machine_model": self.combo_machine.currentText(),
             "inverter_model": self.combo_inverter.currentText(),
+            "tdm_model": self.combo_TDM.currentText(),
             "inverter_eeprom": [self.inverter_eepromX.text().strip(),
                                 self.inverter_eepromY.text().strip()],
             "inverter_dsp": [self.inverter_DSPX.text().strip(),
@@ -1027,7 +1033,7 @@ class AnalysisWindow(QMainWindow):
         update_windows = UI_update_RDP.UpdateRDP(self.user_data, tests)
         
         update_windows.exec_()     
-        path = update_windows.data_path
+        path = update_windows.rdp_path
         if path:
             self.test_full_info["RDP_path"] = str(path)    
         if "RDP_path" in self.test_full_info and self.test_full_info["RDP_path"]:
@@ -1677,6 +1683,7 @@ class AnalysisWindow(QMainWindow):
             f"- Tester Name: {d.get('tester_name', '')}<br>"
             f"- Machine model: {d.get('machine_model', '')}<br>"
             f"- Inverter model: {d.get('inverter_model', '')}<br>"
+            f"- TDM model: {d.get('tdm_model', '')}<br>"
             f"- Inverter EEPROM version: {format_version_field(d.get('inverter_eeprom'))}<br>"
             f"- Inverter DSP version: {format_version_field(d.get('inverter_dsp'))}<br>"
             f"- Inverter ARM version: {format_version_field(d.get('inverter_arm'))}<br>"

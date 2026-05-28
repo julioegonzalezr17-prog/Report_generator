@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
@@ -108,6 +109,7 @@ def update_excel_template(
     template_path,
     output_path,
     data_path,
+    test_path,
     header_data, 
     tests
 ):
@@ -123,6 +125,8 @@ def update_excel_template(
         result: "PASS" (green) or "FAIL" (red)
     """
     template_path = Path(template_path)
+    data_path = Path(data_path)
+    test_path = Path(test_path)
     if output_path is None:
         output_path = Path(template_path)
     else:
@@ -134,11 +138,19 @@ def update_excel_template(
     if template_path.suffix.lower() != ".xlsx":
         raise ValueError("The template must be an .xlsx file")   
     excel_dir = template_path.parent
-
-    shutil.copytree(data_path, excel_dir, dirs_exist_ok=True)
-
     report_folder = excel_dir / "02_Report"
     data_folder = excel_dir / "03_Data"
+    
+    if not os.path.exists(report_folder):
+        os.mkdir(report_folder)
+
+    if not os.path.exists(data_folder):
+        os.mkdir(data_folder)
+
+    shutil.copytree(data_path, data_folder, dirs_exist_ok=True)
+    shutil.copytree(test_path, report_folder, dirs_exist_ok=True)
+
+
 
 
     wb = load_workbook(template_path)

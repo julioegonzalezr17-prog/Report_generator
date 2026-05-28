@@ -9,6 +9,7 @@ import logging
 import UI_report
 import UI_standaloneReport
 import UI_bugGenerator   
+import UI_newRdP
 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class SelectionWindow(QMainWindow):
         self.pixmap_standalone = QPixmap(":/standalone_image.png") 
         self.pixmap_integration = QPixmap(":/integration_image.png") 
         self.pixmap_bugreport = QPixmap(":/bug_image.png")
+        self.pixmap_rdpreport = QPixmap(":/RDP_image.png")
         self.img_label.setScaledContents(True)
         self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding) 
         self.img_label.setFixedSize(300, 200)
@@ -115,6 +117,17 @@ class SelectionWindow(QMainWindow):
                 self.img_label.setPixmap(scaled)
                 self.img_label.setScaledContents(True)
                 self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        elif test_type == "RdP report":
+            pix = self.pixmap_rdpreport
+            if not pix.isNull():
+                scaled = pix.scaled(
+                    self.img_label.size(),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                self.img_label.setPixmap(scaled)
+                self.img_label.setScaledContents(True)
+                self.img_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         else:
             self.img_label.setFixedSize(300, 200)
             self.img_label.setAlignment(Qt.AlignCenter)
@@ -132,6 +145,11 @@ class SelectionWindow(QMainWindow):
             self.win = UI_report.StartWindow()
             self.win.show()
             logger.info("Opening Integration analysis app")
+            self.close()
+        elif self.combo_machine.currentText() == "RdP report":
+            self.win = UI_newRdP.StartWindow()
+            self.win.show()
+            logger.info("Opening RdP report filling app")
             self.close()
         else:
             self.win = UI_bugGenerator.BugReportGenerator()

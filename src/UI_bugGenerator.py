@@ -12,10 +12,13 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import resurces_rc
 from dictDataIntegration import sw_version
+from openpyxl import load_workbook
 
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
-
+import html
+import urllib.parse
+import math
 
 
 class BugReportGenerator(QMainWindow):
@@ -59,10 +62,19 @@ class BugReportGenerator(QMainWindow):
         self.sheet_combo.setMinimumWidth(200)
         self.sheet_combo.currentIndexChanged.connect(self.load_sheet)
 
+        self.TDM_combo = QComboBox()
+        self.TDM_combo.setMinimumWidth(200)
+        self.TDM_combo.addItems(["TDM 4", "TDM 3"])
+        
+
+        combo_layout = QVBoxLayout()
+        combo_layout.addWidget(self.sheet_combo, 2)
+        combo_layout.addWidget(self.TDM_combo, 2)
+
         top_layout = QHBoxLayout()
         top_layout.addWidget(self.path_edit, 4)
         top_layout.addWidget(btn_browse, 1)
-        top_layout.addWidget(self.sheet_combo, 2)
+        top_layout.addLayout(combo_layout, 2)
 
         # =========================
         # LEFT LIST
@@ -143,7 +155,69 @@ class BugReportGenerator(QMainWindow):
         if not sheet:
             return
 
-        self.dataframe = pd.read_excel(self.excel_path, sheet_name=sheet)
+        # =============================
+        # 1. Detectar header real
+        # =============================
+        raw_df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
+
+        header_row = 0
+        for i in range(min(30, len(raw_df))):
+            row = raw_df.iloc[i].astype(str).str.upper()
+
+            if row.str.contains("TEST").any() and row.str.contains("LOG").any():
+                header_row = i
+                break
+
+        # =============================
+        # 2. Leer dataframe correcto
+        # =============================
+        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=header_row)
+
+        # eliminar filas vacías
+        df = df.reset_index(drop=True)
+
+        # =============================
+        # 3. Leer con openpyxl
+        # =============================
+        wb = load_workbook(self.excel_path, data_only=True)
+        ws = wb[sheet]
+
+        headers = [cell.value for cell in ws[header_row + 1]]
+
+        # ✅ detectar SOLO Logs
+        log_columns = [col for col in headers if str(col).strip().upper() == "LOGS"]
+
+
+        # =============================
+        # 4. Leer hyperlinks
+        # =============================
+        for col in log_columns:
+
+            col_idx = headers.index(col)
+
+            values = []
+
+            for row in ws.iter_rows(min_row=header_row + 2):
+
+                cell = row[col_idx]
+
+                text = cell.value
+                link = None
+
+                if cell.hyperlink:
+                    link = cell.hyperlink.target
+
+                values.append({
+                    "text": text,
+                    "link": link
+                })
+
+            # ✅ asegurar mismo tamaño
+            values = values[:len(df)]
+
+            df[col] = values
+
+        self.dataframe = df
         self.build_bug_list()
 
     # =================================================
@@ -188,7 +262,7 @@ class BugReportGenerator(QMainWindow):
             self.result_view.setText("No bugs selected")
             return
 
-        html = ""
+        html_txt = ""
 
         for bug_id in selected:
             try:
@@ -196,19 +270,19 @@ class BugReportGenerator(QMainWindow):
             except Exception:
                 continue
 
-            html += f"<b>BUG {bug_id}</b><br>"
+            html_txt += f"<b>BUG {bug_id}</b><br>"
 
             for col in self.dataframe.columns:
-                if col == "Logs":
-                    continue
 
-                value = self.format_cell(row.get(col, ""))
-                
-                if isinstance(value, str):
-                    value = value.replace("\n", "<br>")
+                raw_value = row.get(col, "")
 
-                if pd.isna(value):
-                    value = ""
+                # ✅ FIX: si es dict → mostrar solo texto
+                if isinstance(raw_value, dict):
+                    value = raw_value.get("text", "")
+                else:
+                    value = raw_value
+
+                value = self.format_cell(value)
 
                 # color status
                 if col == "Status":
@@ -217,11 +291,11 @@ class BugReportGenerator(QMainWindow):
                     else:
                         value = f"<font color='green'>{value}</font>"
 
-                html += f"<b>{col}:</b> {value}<br>"
+                html_txt += f"<b>{col}:</b> {value}<br>"
 
-            html += "<br><hr><br>"
+            html_txt += "<br><hr><br>"
 
-        self.result_view.setHtml(html)
+        self.result_view.setHtml(html_txt)
 
     # =================================================
     # GENERATE PDF ✅
@@ -247,8 +321,8 @@ class BugReportGenerator(QMainWindow):
         styles = getSampleStyleSheet()
 
         content = []
-
-        content.append(Paragraph("Bug Report", styles["Title"]))
+        title = f"Bug Report {self.TDM_combo.currentText()} - Inverter {self.sheet_combo.currentText()}"
+        content.append(Paragraph(title, styles["Title"]))
         content.append(Spacer(1, 12))
 
         for bug_id in selected:
@@ -265,24 +339,57 @@ class BugReportGenerator(QMainWindow):
 
             for col in self.dataframe.columns:
 
-                if col == "Logs":
+                raw_value = row.get(col, "")
+                value = ""
+                if self.is_empty(raw_value):
+                    continue
+                if col == "SOLVED IN VERSION" or col == "Solved in version":
                     continue
 
-                raw_value = row.get(col, "")
-                value = self.format_cell(raw_value)
+                # ✅ FIX: detectar columna Logs correctamente
+                if "LOG" in str(col).upper():
 
-                # ✅ COLOR STATUS
-                bg_color = colors.white
-                if col == "Status":
-                    if "OPEN" in str(raw_value):
-                        bg_color = colors.lightcoral
-                    elif "CLOSE" in str(raw_value):
-                        bg_color = colors.lightgreen
+                    text = ""
+                    link = None
+
+                    if isinstance(raw_value, dict):
+                        text = raw_value.get("text", "")
+                        link = raw_value.get("link")
+                    else:
+                        text = raw_value
+
+                    if link:    
+
+                        link = str(link)
+
+                        # ✅ quitar file:///
+                        link = link.replace("file:///", "").replace("file://", "")
+
+                        # ✅ decodificar espacios (%20 → espacio)
+                        link = urllib.parse.unquote(link)
+
+                        # ✅ convertir UNC paths correctamente
+                        if link.startswith("\\\\"):
+                            link = link.replace("\\", "/")
+                            link = "//" + link.lstrip("/")
+
+                        # ✅ fallback normal
+                        link = link.replace("\\", "/")
+
+                        visible_text = html.escape(str(text))
+
+                        value = f'<link href="{link}"><u><font color="blue">{visible_text}</font></u></link>'
+
+                    else:
+                        value = self.format_cell(text)
+
+                else:
+                    value = self.format_cell(raw_value)
 
                 table_data.append([
                     Paragraph(f"<b>{col}</b>", styles["Normal"]),
                     Paragraph(value, styles["Normal"]),
-                    bg_color
+                    colors.white
                 ])
 
             table = Table(
@@ -290,18 +397,11 @@ class BugReportGenerator(QMainWindow):
                 colWidths=[150, 300]
             )
 
-            style = [
+            table.setStyle(TableStyle([
                 ("BOX", (0, 0), (-1, -1), 1, colors.black),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                 ("BACKGROUND", (0, 0), (0, -1), colors.lightgrey),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ]
-
-            for i, row_data in enumerate(table_data):
-                if row_data[2] != colors.white:
-                    style.append(("BACKGROUND", (1, i), (1, i), row_data[2]))
-
-            table.setStyle(TableStyle(style))
+            ]))
 
             content.append(table)
             content.append(Spacer(1, 20))
@@ -310,17 +410,60 @@ class BugReportGenerator(QMainWindow):
 
         QMessageBox.information(self, "Done", "PDF generated successfully ✅")
 
+
+    def is_empty(self, value):
+        if value is None:
+            return True
+        
+        if isinstance(value, float) and math.isnan(value):
+            return True
+        
+        if isinstance(value, str) and value.strip() == "":
+            return True
+        
+        return False
+    
+    # ✅ FORMATEO SEGURO
     def format_cell(self, value):
 
         if pd.isna(value):
             return ""
 
         value = str(value)
+        # escapar HTML correctamente
+        value = html.escape(value)
 
-        # ✅ escapar SOLO &, pero respetar HTML
-        value = value.replace("&", "&amp;")
-
-        # ✅ saltos de línea reales HTML
+        # saltos de línea
         value = value.replace("\n", "<br/>")
-
         return value
+
+    # ✅ 🔥 LECTOR EXCEL CON LINKS (VERSIÓN CORREGIDA)
+    def read_excel_with_links(file_path):
+
+        wb = load_workbook(file_path, data_only=True)
+        ws = wb.active
+
+        data = []
+
+        # ✅ Leer headers (IMPORTANTE)
+        headers = [cell.value for cell in ws[1]]
+
+        for row in ws.iter_rows(min_row=2):
+            row_data = {}
+
+            for header, cell in zip(headers, row):
+
+                value = cell.value
+
+                link = None
+                if cell.hyperlink:
+                    link = cell.hyperlink.target
+
+                row_data[header] = {
+                    "text": value,
+                    "link": link
+                }
+
+            data.append(row_data)
+
+        return data

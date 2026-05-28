@@ -25,9 +25,28 @@ class UpdateRDP(QDialog):
 
         self.user_input = user_input
         self.test_summary = test_summary
+        self.rdp_path = None
         self.setWindowTitle("RDP automatic report  " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/info_icon.png"))
         self.setMinimumSize(500, 300)
+        self.setStyleSheet("""
+            QWidget {
+                font-size: 14px;
+            }
+            QPushButton {
+                min-height: 30px;
+                padding: 8px 16px;
+                background-color: #2d89ef;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #1b5fbd;
+            }
+        """)
+
+
 
         # ---- Widgets ----
         # Report configuration
@@ -39,6 +58,23 @@ class UpdateRDP(QDialog):
         report_config_row.addWidget(self.report_config)
         report_config_row.addWidget(self.report_config_browse)
 
+        self.report = QLineEdit()
+        self.report.setPlaceholderText("Select the test report folder...")
+        self.report_browse = QPushButton("Browse")
+        self.report_browse.clicked.connect(self.on_browse_report)
+        report_row = QHBoxLayout()
+        report_row.addWidget(self.report)
+        report_row.addWidget(self.report_browse)
+
+        self.report_data = QLineEdit()
+        self.report_data.setPlaceholderText("Select the test data folder...")
+        self.report_data_browse = QPushButton("Browse")
+        self.report_data_browse.clicked.connect(self.on_browse_report_data)
+        report_data_row = QHBoxLayout()
+        report_data_row.addWidget(self.report_data)
+        report_data_row.addWidget(self.report_data_browse)
+        
+
         # Buttons
         self.btn_ok = QPushButton("OK")
         self.btn_cancel = QPushButton("Cancel")
@@ -46,6 +82,8 @@ class UpdateRDP(QDialog):
         # ---- Layout ----
         form = QFormLayout()
         form.addRow("RDP Report File*", report_config_row)
+        form.addRow("Test Report Folder*", report_row)
+        form.addRow("Test Data Folder*", report_data_row)
 
         # Container buttons
         buttons_row = QHBoxLayout()
@@ -64,6 +102,29 @@ class UpdateRDP(QDialog):
         self.btn_ok.clicked.connect(self.on_ok_clicked)
         self.btn_cancel.clicked.connect(self.close)
 
+        # brwose report config File
+
+    def on_browse_report(self):
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Test report folder",
+            ""  # ruta inicial opcional
+        )
+
+        if folder_path:
+            self.report.setText(folder_path)
+    
+    def on_browse_report_data(self):
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Test data folder",
+            ""  # ruta inicial opcional
+        )
+
+        if folder_path:
+            self.report_data.setText(folder_path)
+
+
     # brwose report config File
     def on_browse_report_config(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -81,7 +142,9 @@ class UpdateRDP(QDialog):
         Gather form data into a dict.
         """
         return {
-            "report_config": self.report_config.text().strip()         
+            "report_config": self.report_config.text().strip(),  
+            "test_report": self.report.text().strip(),
+            "test_data": self.report_data.text().strip()       
         }
 
     # Validate input data
@@ -92,6 +155,11 @@ class UpdateRDP(QDialog):
         missing = []
         if not data["report_config"]:
             missing.append("Report Config")
+        if not data["test_report"]:
+            missing.append("Test report folder")
+        if not data["test_data"]:
+            missing.append("Test data folder")
+
         if missing:
             QMessageBox.warning(
                 self,
@@ -155,15 +223,16 @@ class UpdateRDP(QDialog):
             )
             return
 
-        self.data_path = Path(self.user_input["report_file"]).parent.parent     
         header_data = self._build_header_data()
         
         # Call update_excel_template
         try:
+            self.rdp_path = template_path
             fill_RDP_report.update_excel_template(
                 template_path=template_path,
                 output_path=None,
-                data_path=str(self.data_path),
+                data_path=self.report_data.text().strip(),
+                test_path =self.report.text().strip(), 
                 header_data=header_data,
                 tests=self.test_summary
             )

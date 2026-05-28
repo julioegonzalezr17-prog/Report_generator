@@ -1,10 +1,16 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-20
+Last updated: 2026-05-28
 Project root scanned: `Report_generator`
 
 ## Purpose
 This document tracks the current architecture of the Report Generator project and must be updated whenever modules, data flow, or interfaces change.
+
+## Current Version
+
+- `src/dictDataIntegration.py` defines `sw_version = "2.8.00"`
+- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.08.00`
+- The UI windows display `Version 2.8.00` in their titles
 
 ## High-Level Architecture
 
@@ -21,15 +27,16 @@ Multi-window interface orchestration:
   - Uses `lin_to_excel.py` and `modbus_to_excel.py` to convert CSV logs into Excel files.
 - **`UI_buglist.py`**: `BugSelectionWindow` - Dialog for selecting tests with bugs and preparing bug report data.
 - **`UI_BugReport.py`**: `BugReportWindow` - Dialog for generating bug reports from selected tests and external buglist files.
-- **`UI_bugGenerator.py`**: `BugReportGenerator` - Window for generating PDF bug reports from Excel bug lists.
+- **`UI_bugGenerator.py`**: `BugReportGenerator` - Window for generating PDF bug reports from Excel bug lists, including sheet selection, TDM type, and bug summary preview.
 - **`UI_standaloneReport.py`**: `StartWindow` - Alternative UI for standalone test reports.
-- **`UI_update_RDP.py`** - Window for updating RDP reports.
+- **`UI_newRdP.py`**: `StartWindow` - RDP report filling workflow for generating and updating RDP reports from test data.
+- **`UI_update_RDP.py`** - Window for updating RDP reports and writing header/test summary data into RDP templates.
 - **`UI_user_fail_validation.py`**: `ValidationWindow` - Validation/error display window.
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.7.00"`)
-  - Test types: `Standalone test`, `Integration test`, `Bug report`
+  - Software version (`sw_version = "2.8.00"`)
+  - Test types: `Standalone test`, `Integration test`, `RdP report`, `Bug report`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
   - LIN error dictionary (codes 0-21 with names and types)
@@ -114,6 +121,7 @@ SelectionWindow (UI_selection.py)
 | **UI_buglist.py** | `BugSelectionWindow` dialog for selecting tests with bugs and preparing bug report data. |
 | **UI_BugReport.py** | `BugReportWindow` dialog for generating bug reports from selected tests and external buglist files. |
 | **UI_standaloneReport.py** | Alternative UI for standalone test workflows |
+| **UI_newRdP.py** | RDP report filling workflow, generates RDP templates from test data and user input |
 | **UI_update_RDP.py** | Update/modify RDP report templates. Builds `header_data` from `StartWindow` values and passes `tests` summary to `fill_RDP_report.update_excel_template`. |
 | **UI_user_fail_validation.py** | Validation error display window |
 | **main_UI.py** | Application entry point; QApplication setup |
@@ -132,7 +140,23 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-05-20: Updated version to 2.7.00. Added `UI_bugGenerator.py` for PDF bug report generation and synchronized project metadata. Updated version_info.txt to reflect new version (2, 7, 0, 0).
+- 2026-05-28: Updated version to 2.8.00. Added `UI_newRdP.py` for RDP report filling, improved RDP update and bug report workflows, and synchronized `version_info.txt` to `02.08.00`.
+
+## Test Coverage
+
+The current `Test_code/` suite covers the main project subsystems, including:
+
+- `test_fill_rdp.py` — Excel report filling and template styling
+- `test_modbus_to_excel.py` — Modbus CSV to Excel conversion
+- `test_step_engine.py` — core step engine execution
+- `test_step_engine_all_actions.py` — individual step actions and combined logic
+- `test_TDM_config_load.py` — DGTO configuration CSV parsing
+- `Test_read_tdm_report.py` — TDM report reading and workbook styling
+- `test_read_report_file.py` — report parsing utilities
+- `test_load_json_standalone.py`, `test_read-json_standalone.py`, `test_read_standalone.py` — standalone report loading paths
+- `test_version_sw_validation.py`, `test_version_validation_debug.py` — firmware/version validation logic
+- `test_copy_files.py`, `test_bug_review_window.py` — auxiliary file operations and bug review UI support
+
 ## Data Contracts (Key)
 
 ### Test Configuration Dict
@@ -194,6 +218,7 @@ src/
 ├── UI_selection.py                 # SelectionWindow (mode & inverter selection)
 ├── UI_report.py                    # StartWindow + AnalysisWindow (main analysis)
 ├── UI_standaloneReport.py          # Standalone test UI
+├── UI_newRdP.py                    # RDP report filling workflow
 ├── UI_update_RDP.py                # RDP report update
 ├── UI_user_fail_validation.py      # ValidationWindow (error display)
 ├── UI_buglist.py                   # Bug selection dialog
@@ -272,8 +297,8 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.7.00"` | Application version |
-| `test_type` | `['Standalone test', 'Integration test', 'Bug report']` | Test mode selection |
+| `sw_version` | `"2.8.00"` | Application version |
+| `test_type` | `['Standalone test', 'Integration test', 'RdP report', 'Bug report']` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |
 | `header_default_table` | Machine-specific list | UI table column headers |

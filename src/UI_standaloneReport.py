@@ -1,64 +1,69 @@
 import sys, os
 from typing import Dict, Any
-from PySide6.QtWidgets import (QSizePolicy, QWidget, QMainWindow, QLabel, QLineEdit, QTextEdit,
+from PySide6.QtWidgets import (QScrollArea, QSizePolicy, QWidget, QMainWindow, QLabel, QLineEdit, QTextEdit,
                                 QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout, QMessageBox,
                                 QFileDialog, QComboBox, QTableView, QHeaderView, QFrame)
 from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem, QPixmap
 from PySide6.QtCore import Qt
 import Read_TDM_error
-import Read_TDM_report
 import TDM_config_load
 import Load_configuration_test
-from ExcelStyler import ExcelStyler
-from step_engine import StepEngine
 import json_motor
-import re
 from pathlib import Path
-import Read_report_file
-import resurces_rc
 from dictDataIntegration import (inverter, 
                         header_default_table, 
                         header_row_default, 
                         time_data_set,
                         sw_version)
+from dictDataStandalone import machines_standalone
+from pprint import pprint
+import json
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class StartWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Test Analysis Setup " + "Version " + sw_version)
         self.setWindowIcon(QIcon(":/info_icon.png"))
-        self.setMinimumSize(500, 300)
+        self.setMinimumSize(700, 900)
+        self.setStyleSheet("""
+            QWidget {
+                font-size: 14px;
+            }
+            QPushButton {
+                min-height: 30px;
+                padding: 8px 16px;
+                background-color: #2d89ef;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #1b5fbd;
+            }
+        """)
 
         # ---- Widgets ----
         # Report configuration
+        self.modbus_dict = {}
+        self.slave_combos = {}
+
         self.report_config = QLineEdit()
-        self.report_config.setPlaceholderText("Select the report config file...")
+        self.report_config.setPlaceholderText("Select the config file used in Pymodbus...")
         self.report_config_browse = QPushButton("Browse")
         self.report_config_browse.clicked.connect(self.on_browse_report_config)
         report_config_row = QHBoxLayout()
         report_config_row.addWidget(self.report_config)
         report_config_row.addWidget(self.report_config_browse)
 
-        # TDM fault file
-        self.tdm_error = QLineEdit()
-        self.tdm_error.setPlaceholderText("Enter TDM Fault file ...")
-        self.tdm_error_browse = QPushButton("Browse")
-        self.tdm_error_browse.clicked.connect(self.on_browse_tdm_error)
-        tdm_error_row = QHBoxLayout()
-        tdm_error_row.addWidget(self.tdm_error)
-        tdm_error_row.addWidget(self.tdm_error_browse)
-
-        # TDM config file
-        self.tdm_config = QLineEdit()
-        self.tdm_config.setPlaceholderText("Enter TDM Config file ...")
-        self.tdm_config_browse = QPushButton("Browse")
-        self.tdm_config_browse.clicked.connect(self.on_browse_tdm_config)
-        tdm_config_row = QHBoxLayout()
-        tdm_config_row.addWidget(self.tdm_config)
-        tdm_config_row.addWidget(self.tdm_config_browse)
+                # ----------------------------
+        # SCROLL AREA (dinámico)
+        # ----------------------------
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
 
         # Report to fill
         self.report_file = QLineEdit()
@@ -68,16 +73,6 @@ class StartWindow(QMainWindow):
         self.report_file_row = QHBoxLayout()
         self.report_file_row.addWidget(self.report_file)
         self.report_file_row.addWidget(self.report_file_browse)
-
-        # Machine model
-        self.combo_machine = QComboBox()
-        self.combo_machine.addItems(list(inverter.keys()))
-
-        # Inverter model
-        self.combo_inverter = QComboBox()
-        self.combo_inverter.addItems(inverter["Pacman 5"][:])
-        self.combo_machine.currentTextChanged.connect(lambda text: self.update_inverter_list(text))
-        self.combo_inverter.currentTextChanged.connect(lambda text: self.version_selection(text))
 
         # EEPROM
         self.inverter_eepromX = QLineEdit()
@@ -99,7 +94,7 @@ class StartWindow(QMainWindow):
         self.inverter_DSPY.setEnabled(True)
         self.inverter_DSPZ = QLineEdit()
         self.inverter_DSPZ.setPlaceholderText("zz")
-        self.inverter_DSPZ.setEnabled(False)
+        self.inverter_DSPZ.setEnabled(True)
         self.inverter_DSP = QHBoxLayout()
         self.inverter_DSP.addWidget(self.inverter_DSPX)
         self.inverter_DSP.addWidget(self.inverter_DSPY)
@@ -108,10 +103,10 @@ class StartWindow(QMainWindow):
         # ARM
         self.inverter_ARMX = QLineEdit()
         self.inverter_ARMX.setPlaceholderText("Vxx")
-        self.inverter_ARMX.setEnabled(False)
+        self.inverter_ARMX.setEnabled(True)
         self.inverter_ARMY = QLineEdit()
         self.inverter_ARMY.setPlaceholderText("Tyy")
-        self.inverter_ARMY.setEnabled(False)
+        self.inverter_ARMY.setEnabled(True)
         self.inverter_ARM = QHBoxLayout()
         self.inverter_ARM.addWidget(self.inverter_ARMX)
         self.inverter_ARM.addWidget(self.inverter_ARMY)
@@ -119,10 +114,10 @@ class StartWindow(QMainWindow):
         # PFC
         self.inverter_PFCX = QLineEdit()
         self.inverter_PFCX.setPlaceholderText("Vxx")
-        self.inverter_PFCX.setEnabled(False)
+        self.inverter_PFCX.setEnabled(True)
         self.inverter_PFCY = QLineEdit()
         self.inverter_PFCY.setPlaceholderText("Tyy")
-        self.inverter_PFCY.setEnabled(False)
+        self.inverter_PFCY.setEnabled(True)
         self.inverter_PFC = QHBoxLayout()
         self.inverter_PFC.addWidget(self.inverter_PFCX)
         self.inverter_PFC.addWidget(self.inverter_PFCY)
@@ -142,19 +137,17 @@ class StartWindow(QMainWindow):
         self.CB.addWidget(self.CBY)
         self.CB.addWidget(self.CBZ)
 
-        # TDM
-        self.TDMX = QLineEdit()
-        self.TDMX.setPlaceholderText("Vxx")
-        self.TDMY = QLineEdit()
-        self.TDMY.setPlaceholderText("Tyy")
-        self.TDMZ = QLineEdit()
-        self.TDMZ.setPlaceholderText("zz")
-        self.TDM = QHBoxLayout()
-        self.TDM.addWidget(self.TDMX)
-        self.TDM.addWidget(self.TDMY)
-        self.TDM.addWidget(self.TDMZ)
+        # User Pump - fan
+        self.pump = QLineEdit()
+        self.pump.setPlaceholderText("Enter Pump Model ...")
+        self.fan = QLineEdit()
+        self.fan.setPlaceholderText("Enter Fan Model ...")
 
         # User Name
+        self.rdp_data = QLineEdit()
+        self.rdp_data.setPlaceholderText("Enter RDP number ...")
+        self.requester_name = QLineEdit()
+        self.requester_name.setPlaceholderText("Requested by ...")
         self.tester_name = QLineEdit()
         self.tester_name.setPlaceholderText("Enter your name")
         self.notes = QTextEdit()
@@ -164,22 +157,34 @@ class StartWindow(QMainWindow):
         self.btn_ok = QPushButton("OK")
         self.btn_cancel = QPushButton("Cancel")
 
+        layout_jason = QFormLayout()
+        layout_jason.addRow("Report Config*", report_config_row)
+
+        self.container_menu = QWidget()
+        self.scroll_layout = QVBoxLayout(self.container_menu)
+        self.scroll.setWidget(self.container_menu)
+        # inicialmente deshabilitado
+        self.scroll.setVisible(False)
+
+
         # ---- Layout ----
-        form = QFormLayout()
-        form.addRow("Report Config*", report_config_row)
-        form.addRow("TDM Fault File*", tdm_error_row)
-        form.addRow("TDM Config File*", tdm_config_row)
-        form.addRow("Report File*", self.report_file_row)
-        form.addRow("Machine model", self.combo_machine)
-        form.addRow("Inverter model", self.combo_inverter)
-        form.addRow("Inverter EEPROM Vxx.Tyy*", self.inverter_EPR)
-        form.addRow("Inverter DSP Vxx.Tyy.zz*", self.inverter_DSP)
-        form.addRow("Inverter ARM Vxx.Tyy*", self.inverter_ARM)
-        form.addRow("Inverter PFC Vxx.Tyy*", self.inverter_PFC)
-        form.addRow("Control Board XX.YY.ZZ*", self.CB)
-        form.addRow("TDM Version XX.YY.ZZ*", self.TDM)
-        form.addRow("Tester Name*", self.tester_name)
-        form.addRow("Notes", self.notes)
+        self.form = QFormLayout()
+        self.form.addRow("Report File*", self.report_file_row)
+        self.form.addRow("Inverter EEPROM Vxx.Tyy*", self.inverter_EPR)
+        self.form.addRow("Inverter DSP Vxx.Tyy.zz*", self.inverter_DSP)
+        self.form.addRow("Inverter ARM Vxx.Tyy*", self.inverter_ARM)
+        self.form.addRow("Inverter PFC Vxx.Tyy*", self.inverter_PFC)
+        self.form.addRow("Control Board XX.YY.ZZ*", self.CB)
+        self.form.addRow("Pump model*", self.pump)
+        self.form.addRow("Fan model*", self.fan)
+        self.form.addRow("RDP number*", self.rdp_data)
+        self.form.addRow("Requested By*", self.requester_name)
+        self.form.addRow("Tester Name*", self.tester_name)
+        self.form.addRow("Notes", self.notes)
+        self.form.setEnabled(False)
+        for i in range(self.form.rowCount()):
+            self.form.setRowVisible(i, False)
+
 
         # Container buttons
         buttons_row = QHBoxLayout()
@@ -188,12 +193,30 @@ class StartWindow(QMainWindow):
         buttons_row.addWidget(self.btn_ok)
 
         # Container full sceen
-        container = QWidget()
-        v = QVBoxLayout(container)
-        v.addLayout(form)
-        v.addStretch(1)
-        v.addLayout(buttons_row)
-        self.setCentralWidget(container)
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QVBoxLayout(main_widget)
+
+        # 1️⃣ CONFIG JSON ARRIBA
+        top_box = QVBoxLayout()
+        top_box.addLayout(layout_jason)
+
+        # 3️⃣ FORMULARIO (ABAJO)
+        form_box = QVBoxLayout()
+        form_box.addLayout(self.form)
+
+        # 4️⃣ BOTONES
+        buttons_box = QHBoxLayout()
+        buttons_box.addStretch()
+        buttons_box.addWidget(self.btn_cancel)
+        buttons_box.addWidget(self.btn_ok)
+
+        # ✅ COMPOSICIÓN FINAL
+        main_layout.addLayout(top_box)
+        main_layout.addWidget(self.scroll)   # ✅ ocupa más espacio
+        self.scroll.setMaximumHeight(150)
+        main_layout.addLayout(form_box)      # ✅ menor que scroll
+        main_layout.addLayout(buttons_box)
 
         # ---- Signals ----
         self.btn_ok.clicked.connect(self.on_ok_clicked)
@@ -201,6 +224,37 @@ class StartWindow(QMainWindow):
 
         # Keep a reference to the next window so it's not garbage-collected
         self._analysis_window = None
+    
+    #Read json configuration pymodbus file
+    def build_modbus_dict(self,json_path):
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        result = {}
+
+        for block in data:
+
+            slave_id = block.get("slave_id")
+            slave_key = f"slave_ID_{slave_id}"
+
+            # crear nodo si no existe
+            if slave_key not in result:
+                result[slave_key] = {}
+
+            addresses = block.get("addresses", [])
+            registers = block.get("registers", [])
+
+            # asegurar que sean same length
+            for addr, reg in zip(addresses, registers):
+
+                result[slave_key][addr] = {
+                    "name": reg.get("name", ""),
+                    "is_bitmap": reg.get("is_bitmap", False),
+                    "bit_labels": reg.get("bit_labels", [])
+                }
+
+        return result
 
     # brwose report config File
     def on_browse_report_config(self):
@@ -210,30 +264,58 @@ class StartWindow(QMainWindow):
             "",
             "All Files (*)"
         )
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext not in [".json"]:
+            QMessageBox.warning(
+                self,
+                "Invalid file type",
+                f"The file must be a JSON file (.json):\n{file_path}"
+            )
+            return
         if file_path:
             self.report_config.setText(file_path)
+            self.modbus_dict = self.build_modbus_dict(file_path)
+            self.build_slave_list()
+                    # habilitar UI
+            self.scroll.setVisible(True)
+            self.container_menu.setEnabled(True)
+            self.form.setEnabled(True) 
+            for i in range(self.form.rowCount()):
+                self.form.setRowVisible(i, True)
 
-    # brwose TDM fault File
-    def on_browse_tdm_error(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select TDM Error file",
-            "",
-            "All Files (*)"
-        )
-        if file_path:
-            self.tdm_error.setText(file_path) 
+    def build_slave_list(self):
 
-    # brwose TDM config File
-    def on_browse_tdm_config(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select TDM Config file",
-            "",
-            "All Files (*)"
-        )
-        if file_path:
-            self.tdm_config.setText(file_path) 
+        # limpiar
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # crear filas
+        for slave_key in self.modbus_dict.keys():
+
+            row_widget = QWidget()
+            row_layout = QHBoxLayout(row_widget)
+
+            # etiqueta slave
+            label = QLabel(slave_key)
+            label.setMinimumWidth(150)
+
+            # combobox máquinas
+            combo = QComboBox()
+            combo.addItems(machines_standalone)
+            combo.setMinimumWidth(200)
+            self.slave_combos[slave_key] = combo
+
+            row_layout.addWidget(label)
+            row_layout.addWidget(combo)
+            row_layout.addStretch()
+
+            self.scroll_layout.addWidget(row_widget)
+
+        self.scroll_layout.addStretch()
+        for slave, data in self.slave_combos.items():
+            self.slave_combos[slave].currentTextChanged.connect(self.version_selection)
 
     # brwose report  File
     def on_browse_report_file(self):
@@ -246,175 +328,202 @@ class StartWindow(QMainWindow):
         if file_path:
             self.report_file.setText(file_path) 
 
-    # Update inverter list considering machine model
-    def update_inverter_list(self, machine_model):
-        self.combo_inverter.clear()
-        self.combo_inverter.addItems(inverter.get(machine_model, []))
-
     # Input data validation
-    def version_selection(self,inverter_model):
-        match inverter_model:
-            case "ID1PH_R290":        
-                self.inverter_eepromX.setPlaceholderText("Vxx")
-                self.inverter_eepromX.clear()
-                self.inverter_eepromX.setEnabled(True) 
-                self.inverter_eepromY.setPlaceholderText("Tyy")
-                self.inverter_eepromY.clear()
-                self.inverter_eepromY.setEnabled(True) 
-                self.inverter_DSPX.setPlaceholderText("Vxx")
-                self.inverter_DSPX.clear()
-                self.inverter_DSPX.setEnabled(True)
-                self.inverter_DSPY.setPlaceholderText("Tyy")
-                self.inverter_DSPY.clear()
-                self.inverter_DSPY.setEnabled(True)
-                self.inverter_DSPZ.setPlaceholderText("zz")
-                self.inverter_DSPZ.clear() 
-                self.inverter_DSPZ.setEnabled(False)
-                self.inverter_ARMX.setPlaceholderText("Vxx")
-                self.inverter_ARMX.clear()
-                self.inverter_ARMX.setEnabled(True)
-                self.inverter_ARMY.setPlaceholderText("Tyy")
-                self.inverter_ARMY.clear()
-                self.inverter_ARMY.setEnabled(True)
-                self.inverter_PFCX.setPlaceholderText("Vxx")
-                self.inverter_PFCX.clear()
-                self.inverter_PFCX.setEnabled(False)
-                self.inverter_PFCY.setPlaceholderText("Tyy")
-                self.inverter_PFCY.clear()
-                self.inverter_PFCY.setEnabled(False)
-                self.CBX.setPlaceholderText("Vxx")
-                self.CBX.clear()
-                self.CBX.setEnabled(False)
-                self.CBY.setPlaceholderText("Tyy")
-                self.CBY.clear()
-                self.CBY.setEnabled(False)
-                self.CBZ.setPlaceholderText("zz")
-                self.CBZ.clear()
-                self.CBZ.setEnabled(False)
-            case "Ariston":       
-                self.inverter_eepromX.setPlaceholderText("Vxx")
-                self.inverter_eepromX.clear()
-                self.inverter_eepromX.setEnabled(False) 
-                self.inverter_eepromY.setPlaceholderText("Tyy")
-                self.inverter_eepromY.clear()
-                self.inverter_eepromY.setEnabled(False) 
-                self.inverter_DSPX.setPlaceholderText("Vxx")
-                self.inverter_DSPX.clear()
-                self.inverter_DSPX.setEnabled(True)
-                self.inverter_DSPY.setPlaceholderText("Tyy")
-                self.inverter_DSPY.clear()
-                self.inverter_DSPY.setEnabled(True)
-                self.inverter_DSPZ.setPlaceholderText("zz") 
-                self.inverter_DSPZ.clear() 
-                self.inverter_DSPZ.setEnabled(True)
-                self.inverter_ARMX.setPlaceholderText("Vxx")
-                self.inverter_ARMX.clear()
-                self.inverter_ARMX.setEnabled(False)
-                self.inverter_ARMY.setPlaceholderText("Tyy")
-                self.inverter_ARMY.clear()
-                self.inverter_ARMY.setEnabled(False)
-                self.inverter_PFCX.setPlaceholderText("Vxx")
-                self.inverter_PFCX.clear()
-                self.inverter_PFCX.setEnabled(False)
-                self.inverter_PFCY.setPlaceholderText("Tyy")
-                self.inverter_PFCY.clear()
-                self.inverter_PFCY.setEnabled(False)
-                self.CBX.setPlaceholderText("Vxx")
+    def version_selection(self):  
+        count = 0  
+        if "Control Board" not in  self.slave_combos.keys():
+            self.CBX.clear()
+            self.CBX.setEnabled(False)
+            self.CBY.clear()
+            self.CBY.setEnabled(False)
+            self.CBZ.clear()
+            self.CBZ.setEnabled(False)
+        if "LIN Pump" not in self.slave_combos.keys():
+            self.pump.clear()
+            self.pump.setEnabled(False)
+        if "EBM Fan" not in self.slave_combos.keys():
+            self.fan.clear()
+            self.fan.setEnabled(False)
+        if "ZA Fan" not in self.slave_combos.keys():
+            self.fan.clear()
+            self.fan.setEnabled(False)
+
+        for slave_key, combo in self.slave_combos.items():            
+            if combo.currentText() == "Control Board":
                 self.CBX.clear()
                 self.CBX.setEnabled(True)
-                self.CBY.setPlaceholderText("Tyy")
                 self.CBY.clear()
                 self.CBY.setEnabled(True)
-                self.CBZ.setPlaceholderText("zz")
                 self.CBZ.clear()
-                self.CBZ.setEnabled(True)
-            case "RD4018":
-                self.inverter_eepromX.setPlaceholderText("Vxx")
-                self.inverter_eepromX.clear()
-                self.inverter_eepromX.setEnabled(True) 
-                self.inverter_eepromY.setPlaceholderText("Tyy")
-                self.inverter_eepromY.clear()
-                self.inverter_eepromY.setEnabled(True) 
-                self.inverter_DSPX.setPlaceholderText("Vxx")
-                self.inverter_DSPX.clear()
-                self.inverter_DSPX.setEnabled(True)
-                self.inverter_DSPY.setPlaceholderText("Tyy")
-                self.inverter_DSPY.clear()
-                self.inverter_DSPY.setEnabled(True)
-                self.inverter_DSPZ.setPlaceholderText("zz")
-                self.inverter_DSPZ.clear() 
-                self.inverter_DSPZ.setEnabled(False)
-                self.inverter_ARMX.setPlaceholderText("Vxx")
-                self.inverter_ARMX.clear()
-                self.inverter_ARMX.setEnabled(False)
-                self.inverter_ARMY.setPlaceholderText("Tyy")
-                self.inverter_ARMY.clear()
-                self.inverter_ARMY.setEnabled(False)
-                self.inverter_PFCX.setPlaceholderText("Vxx")
-                self.inverter_PFCX.clear()
-                self.inverter_PFCX.setEnabled(True)
-                self.inverter_PFCY.setPlaceholderText("Tyy")
-                self.inverter_PFCY.clear()
-                self.inverter_PFCY.setEnabled(True)
-                self.CBX.setPlaceholderText("Vxx")
-                self.CBX.clear()
-                self.CBX.setEnabled(True)                
-                self.CBY.setPlaceholderText("Tyy")
-                self.CBY.clear()
-                self.CBY.setEnabled(True)
-                self.CBZ.setPlaceholderText("zz")
-                self.CBZ.clear()
-                self.CBZ.setEnabled(True)
-            case _:
-                self.inverter_eepromX.setPlaceholderText("Vxx")
-                self.inverter_eepromX.clear()
-                self.inverter_eepromX.setEnabled(True) 
-                self.inverter_eepromY.setPlaceholderText("Tyy")
-                self.inverter_eepromY.clear()
-                self.inverter_eepromY.setEnabled(True) 
-                self.inverter_DSPX.setPlaceholderText("Vxx")
-                self.inverter_DSPX.clear()
-                self.inverter_DSPX.setEnabled(True)
-                self.inverter_DSPY.setPlaceholderText("Tyy")
-                self.inverter_DSPY.clear()
-                self.inverter_DSPY.setEnabled(True)
-                self.inverter_DSPZ.setPlaceholderText("zz") 
-                self.inverter_DSPZ.clear()
-                self.inverter_DSPZ.setEnabled(False)
-                self.inverter_ARMX.setPlaceholderText("Vxx")
-                self.inverter_ARMX.clear()
-                self.inverter_ARMX.setEnabled(False)
-                self.inverter_ARMY.setPlaceholderText("Tyy")
-                self.inverter_ARMY.clear()
-                self.inverter_ARMY.setEnabled(False)
-                self.inverter_PFCX.setPlaceholderText("Vxx")
-                self.inverter_PFCX.clear()
-                self.inverter_PFCX.setEnabled(False)
-                self.inverter_PFCY.setPlaceholderText("Tyy")
-                self.inverter_PFCY.clear()
-                self.inverter_PFCY.setEnabled(False)
-                self.CBX.setPlaceholderText("Vxx")
-                self.CBX.clear()
-                self.CBX.setEnabled(True)
-                self.CBY.setPlaceholderText("Tyy")
-                self.CBY.clear()
-                self.CBY.setEnabled(True)
-                self.CBZ.setPlaceholderText("zz")
-                self.CBZ.clear()
-                self.CBZ.setEnabled(True)
+                self.CBZ.setEnabled(True)                
+                continue
+            if combo.currentText() == "LIN Pump":  
+                self.pump.clear()
+                self.pump.setEnabled(True)              
+                continue
+            if combo.currentText() == "EBM Fan":
+                self.fan.clear()
+                self.fan.setEnabled(True)                
+                continue
+            if combo.currentText() == "ZA Fan": 
+                self.fan.clear()
+                self.fan.setEnabled(True)               
+                continue
+            if count < 1:
+                match combo.currentText():
+                    case "ID1PH_R290":  
+                        self.inverter_eepromX.setPlaceholderText("Vxx")
+                        self.inverter_eepromX.clear()
+                        self.inverter_eepromX.setEnabled(True)                    
+                        self.inverter_eepromY.setPlaceholderText("Tyy")
+                        self.inverter_eepromY.clear()
+                        self.inverter_eepromY.setEnabled(True) 
+                        self.inverter_DSPX.setPlaceholderText("Vxx")
+                        self.inverter_DSPX.clear()
+                        self.inverter_DSPX.setEnabled(True)
+                        self.inverter_DSPY.setPlaceholderText("Tyy")
+                        self.inverter_DSPY.clear()
+                        self.inverter_DSPY.setEnabled(True)
+                        self.inverter_DSPZ.setPlaceholderText("zz")
+                        self.inverter_DSPZ.clear() 
+                        self.inverter_DSPZ.setEnabled(False)
+                        self.inverter_ARMX.setPlaceholderText("Vxx")
+                        self.inverter_ARMX.clear()
+                        self.inverter_ARMX.setEnabled(True)
+                        self.inverter_ARMY.setPlaceholderText("Tyy")
+                        self.inverter_ARMY.clear()
+                        self.inverter_ARMY.setEnabled(True)
+                        self.inverter_PFCX.setPlaceholderText("Vxx")
+                        self.inverter_PFCX.clear()
+                        self.inverter_PFCX.setEnabled(False)
+                        self.inverter_PFCY.setPlaceholderText("Tyy")
+                        self.inverter_PFCY.clear()
+                        self.inverter_PFCY.setEnabled(False)
+                    case "Ariston":       
+                        self.inverter_eepromX.setPlaceholderText("Vxx")
+                        self.inverter_eepromX.clear()
+                        self.inverter_eepromX.setEnabled(False) 
+                        self.inverter_eepromY.setPlaceholderText("Tyy")
+                        self.inverter_eepromY.clear()
+                        self.inverter_eepromY.setEnabled(False) 
+                        self.inverter_DSPX.setPlaceholderText("Vxx")
+                        self.inverter_DSPX.clear()
+                        self.inverter_DSPX.setEnabled(True)
+                        self.inverter_DSPY.setPlaceholderText("Tyy")
+                        self.inverter_DSPY.clear()
+                        self.inverter_DSPY.setEnabled(True)
+                        self.inverter_DSPZ.setPlaceholderText("zz") 
+                        self.inverter_DSPZ.clear() 
+                        self.inverter_DSPZ.setEnabled(True)
+                        self.inverter_ARMX.setPlaceholderText("Vxx")
+                        self.inverter_ARMX.clear()
+                        self.inverter_ARMX.setEnabled(False)
+                        self.inverter_ARMY.setPlaceholderText("Tyy")
+                        self.inverter_ARMY.clear()
+                        self.inverter_ARMY.setEnabled(False)
+                        self.inverter_PFCX.setPlaceholderText("Vxx")
+                        self.inverter_PFCX.clear()
+                        self.inverter_PFCX.setEnabled(False)
+                        self.inverter_PFCY.setPlaceholderText("Tyy")
+                        self.inverter_PFCY.clear()
+                        self.inverter_PFCY.setEnabled(False)
+                        self.CBX.setPlaceholderText("Vxx")
+                        self.CBX.clear()
+                        self.CBX.setEnabled(True)
+                        self.CBY.setPlaceholderText("Tyy")
+                        self.CBY.clear()
+                        self.CBY.setEnabled(True)
+                        self.CBZ.setPlaceholderText("zz")
+                        self.CBZ.clear()
+                        self.CBZ.setEnabled(True)
+                    case "RD4018":
+                        self.inverter_eepromX.setPlaceholderText("Vxx")
+                        self.inverter_eepromX.clear()
+                        self.inverter_eepromX.setEnabled(True) 
+                        self.inverter_eepromY.setPlaceholderText("Tyy")
+                        self.inverter_eepromY.clear()
+                        self.inverter_eepromY.setEnabled(True) 
+                        self.inverter_DSPX.setPlaceholderText("Vxx")
+                        self.inverter_DSPX.clear()
+                        self.inverter_DSPX.setEnabled(True)
+                        self.inverter_DSPY.setPlaceholderText("Tyy")
+                        self.inverter_DSPY.clear()
+                        self.inverter_DSPY.setEnabled(True)
+                        self.inverter_DSPZ.setPlaceholderText("zz")
+                        self.inverter_DSPZ.clear() 
+                        self.inverter_DSPZ.setEnabled(False)
+                        self.inverter_ARMX.setPlaceholderText("Vxx")
+                        self.inverter_ARMX.clear()
+                        self.inverter_ARMX.setEnabled(False)
+                        self.inverter_ARMY.setPlaceholderText("Tyy")
+                        self.inverter_ARMY.clear()
+                        self.inverter_ARMY.setEnabled(False)
+                        self.inverter_PFCX.setPlaceholderText("Vxx")
+                        self.inverter_PFCX.clear()
+                        self.inverter_PFCX.setEnabled(True)
+                        self.inverter_PFCY.setPlaceholderText("Tyy")
+                        self.inverter_PFCY.clear()
+                        self.inverter_PFCY.setEnabled(True)
+                        self.CBX.setPlaceholderText("Vxx")
+                        self.CBX.clear()
+                        self.CBX.setEnabled(True)                
+                        self.CBY.setPlaceholderText("Tyy")
+                        self.CBY.clear()
+                        self.CBY.setEnabled(True)
+                        self.CBZ.setPlaceholderText("zz")
+                        self.CBZ.clear()
+                        self.CBZ.setEnabled(True)
+                    case _:
+                        self.inverter_eepromX.setPlaceholderText("Vxx")
+                        self.inverter_eepromX.clear()
+                        self.inverter_eepromX.setEnabled(True) 
+                        self.inverter_eepromY.setPlaceholderText("Tyy")
+                        self.inverter_eepromY.clear()
+                        self.inverter_eepromY.setEnabled(True) 
+                        self.inverter_DSPX.setPlaceholderText("Vxx")
+                        self.inverter_DSPX.clear()
+                        self.inverter_DSPX.setEnabled(True)
+                        self.inverter_DSPY.setPlaceholderText("Tyy")
+                        self.inverter_DSPY.clear()
+                        self.inverter_DSPY.setEnabled(True)
+                        self.inverter_DSPZ.setPlaceholderText("zz") 
+                        self.inverter_DSPZ.clear()
+                        self.inverter_DSPZ.setEnabled(False)
+                        self.inverter_ARMX.setPlaceholderText("Vxx")
+                        self.inverter_ARMX.clear()
+                        self.inverter_ARMX.setEnabled(False)
+                        self.inverter_ARMY.setPlaceholderText("Tyy")
+                        self.inverter_ARMY.clear()
+                        self.inverter_ARMY.setEnabled(False)
+                        self.inverter_PFCX.setPlaceholderText("Vxx")
+                        self.inverter_PFCX.clear()
+                        self.inverter_PFCX.setEnabled(False)
+                        self.inverter_PFCY.setPlaceholderText("Tyy")
+                        self.inverter_PFCY.clear()
+                        self.inverter_PFCY.setEnabled(False)
+                        self.CBX.setPlaceholderText("Vxx")
+                        self.CBX.clear()
+                        self.CBX.setEnabled(True)
+                        self.CBY.setPlaceholderText("Tyy")
+                        self.CBY.clear()
+                        self.CBY.setEnabled(True)
+                        self.CBZ.setPlaceholderText("zz")
+                        self.CBZ.clear()
+                        self.CBZ.setEnabled(True)
+            count = count + 1
 
     # Collect the data provided by the user in a dict
     def _collect_input(self) -> Dict[str, Any]:
         """
         Gather form data into a dict.
         """
+        data_slaves = {}
+        for slaves, data in self.slave_combos.items():
+            data_slaves[slaves] = data.currentText()
         return {
             "report_config": self.report_config.text().strip(),
-            "tdm_error": self.tdm_error.text().strip(),
-            "tdm_config": self.tdm_config.text().strip(),
             "report_file": self.report_file.text().strip(),
-            "machine_model": self.combo_machine.currentText(),
-            "inverter_model": self.combo_inverter.currentText(),
+            "data_slaves": data_slaves,
             "inverter_eeprom": [self.inverter_eepromX.text().strip(),
                                 self.inverter_eepromY.text().strip()],
             "inverter_dsp": [self.inverter_DSPX.text().strip(),
@@ -427,9 +536,10 @@ class StartWindow(QMainWindow):
             "control_board": [self.CBX.text().strip(),
                             self.CBY.text().strip(),
                             self.CBZ.text().strip()],
-            "tdm_version": [self.TDMX.text().strip(),
-                            self.TDMY.text().strip(),
-                            self.TDMZ.text().strip()],
+            "pump_model": self.pump.text().strip(),  
+            "fan_model": self.fan.text().strip(),               
+            "rdp_number": self.rdp_data.text().strip(),
+            "requester_name": self.requester_name.text().strip(),
             "tester_name": self.tester_name.text().strip(),
             "notes": self.notes.toPlainText().strip()            
         }
@@ -442,10 +552,6 @@ class StartWindow(QMainWindow):
         missing = []
         if not data["report_config"]:
             missing.append("Report Config")
-        if not data["tdm_error"]:
-            missing.append("TDM Error File")
-        if not data["tdm_config"]:
-            missing.append("TDM Config File")
         if not data["report_file"]:
             missing.append("Report File")
         for i in range(self.inverter_EPR.count()):
@@ -498,16 +604,16 @@ class StartWindow(QMainWindow):
             if element.isEnabled():
                 if not data["control_board"][i]:
                     missing.append("Control Board") 
-        for i in range(self.TDM.count()):
-            item = self.TDM.itemAt(i)
-            if item is None:
-                continue
-            element = item.widget()
-            if element is None:
-                continue
-            if element.isEnabled():
-                if not data["tdm_version"][i]:
-                    missing.append("TDM Version")
+        if self.pump.isEnabled():
+            if not data["pump_model"]:
+                missing.append("Pump Model")
+        if self.fan.isEnabled():
+            if not data["fan_model"]:
+                missing.append("Fan Model")
+        if not data["rdp_number"]:
+            missing.append("RDP Number")
+        if not data["requester_name"]:
+            missing.append("Requester Name")
         if not data["tester_name"]:
             missing.append("Tester Name")
         if missing:
@@ -525,69 +631,24 @@ class StartWindow(QMainWindow):
         before opening the analysis window.
         """
         data = self._collect_input()
+        pprint(data)
         if not self._validate(data):
+            return        
+        if not os.path.isfile(data["report_file"]):
+            QMessageBox.warning(
+                self,
+                "File not found",
+                f"The file specified for '{data['report_file']}' does not exist:\n{data['report_file']}"
+            )
             return
-        # file validation
-        test_config_dict = None
-        tdm_config_dict = None
-        tdm_fault_dict = None
-
-        for key in ["report_config", "tdm_error", "tdm_config", "report_file"]:
-            if not os.path.isfile(data[key]):
-                QMessageBox.warning(
-                    self,
-                    "File not found",
-                    f"The file specified for '{key}' does not exist:\n{data[key]}"
-                )
-                return
-            ext = os.path.splitext(data[key])[1].lower()
-            if ext not in [".xlsx", ".xls",".csv"]:
-                QMessageBox.warning(
-                    self,
-                    "Invalid file type",
-                    f"The file specified for '{key}' must be an Excel or CSV file (.xlsx or .xls or .csv):\n{data[key]}"
-                )
-                return
-        ext = os.path.splitext(data["report_config"])[1].lower()    
-        if ext in [".xlsx", ".xls"]:
-            test_config_dict = Load_configuration_test.load_test_definition_xlsx(data["report_config"],data["inverter_model"])
-        elif ext == ".csv":
+        ext = os.path.splitext(data["report_file"])[1].lower()
+        if ext not in [".xlsx", ".xls"]:
             QMessageBox.warning(
                 self,
                 "Invalid file type",
-                f"The file specified for 'report_config' must be an especific Excel file (.xlsx or .xls):\n{data['report_config']}"
+                f"The file specified for '{data['report_file']}' must be an Excel file (.xlsx or .xls):\n{data['report_file']}"
             )
-            return
-        ext = os.path.splitext(data["tdm_error"])[1].lower() 
-        if ext in [".xlsx", ".xls"]:
-            tdm_fault_dict = Read_TDM_error.load_tdm_once(data["tdm_error"], header_row_default)
-        elif ext == ".csv":
-            QMessageBox.warning(
-                self,
-                "Invalid file type",
-                f"The file specified for 'tdm_error' must be an especific Excel file (.xlsx or .xls):\n{data['tdm_error']}"
-            )
-            return
-        ext = os.path.splitext(data["tdm_config"])[1].lower()    
-        if ext == ".csv":
-            tdm_config_dict = TDM_config_load.load_tdm_config(data["tdm_config"])
-            print(tdm_config_dict)
-        elif ext in [".xlsx", ".xls"]:
-            QMessageBox.warning(
-                self,
-                "Invalid file type",
-                f"The file specified for 'tdm_config' must be an especific CSV file (.csv):\n{data['tdm_config']}"
-            )
-            return
-        ext = os.path.splitext(data["report_file"])[1].lower()    
-        if not ext == ".xlsx":
-            QMessageBox.warning(
-                self,
-                "Invalid file type",
-                f"The file specified for 'report_file' must be an especific XLSX file (.xlsx):\n{data['report_file']}"
-            )
-            return
-        
+            return       
         for i in range(self.inverter_EPR.count()):
             item = self.inverter_EPR.itemAt(i)
             if item is None:
@@ -695,43 +756,6 @@ class StartWindow(QMainWindow):
                     )
                     return
 
-        for i in range(self.TDM.count()):
-            item = self.TDM.itemAt(i)
-            if item is None:
-                continue
-            element = item.widget()
-            if element is None:
-                continue
-            if element.isEnabled():
-                if not data["tdm_version"][i].isdigit():
-                    if isinstance(element, QLineEdit):
-                        element.clear()
-
-                    elif isinstance(element, QLabel):
-                        element.setText("")
-                    QMessageBox.warning(
-                    self,
-                    "Invalid data type",
-                    f"TDM version must be a numeric value"
-                    )
-                    return
-
-        test_step_path = str(Path(data["report_config"]).with_suffix(".json"))
-        test_analysis_steps = json_motor.create_test_config_json(xlsx_path= data["report_config"],
-                                        json_path = test_step_path,
-                                        sheet_name = data["inverter_model"],
-                                        machine_type = data["machine_model"],
-                                        inverter_type = data["inverter_model"]
-                                        )
-        # Open AnalysisWindow and pass data
-        # self._analysis_window = AnalysisWindow(initial_data=data, 
-        #                                         test_config_dict=test_config_dict, 
-        #                                         tdm_fault_dict=tdm_fault_dict, 
-        #                                         tdm_config_dict=tdm_config_dict,
-        #                                         test_steps_dic = test_analysis_steps,
-        #                                         temp_json_path = test_step_path
-        #                                         )
-        # self._analysis_window.show()
         self.close()  # Close the start window after opening the analysis window
         # Optionally hide start window (or close it if you want)
         # self.hide()

@@ -341,7 +341,7 @@ class BugReportWindow(QDialog):
         write("ARM version", ".".join(report_data.get("inverter_arm", [])))
         write("CB version", ".".join(report_data.get("control_board", [])))
         write("TDM version", ".".join(report_data.get("tdm_version", [])))
-
+        write("RDP-Num", ".".join(report_data.get("RDP-Num", [])))
         write("Date Tested", datetime.now().strftime("%d/%m/%Y"))
 
         # =========================

@@ -9,5 +9,6 @@
     <file alias="standalone_image.png">../iconos/standalone_image.png</file>
     <file alias="integration_image.png">../iconos/integration_image.png</file>
     <file alias="bug_image.png">../iconos/bug_image.png</file>
+    <file alias="RDP_image.png">../iconos/RDP_image.png</file>
 </qresource>
 </RCC>
