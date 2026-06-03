@@ -1052,6 +1052,7 @@ class AnalysisWindow(QMainWindow):
         else:
             self.write_info_data(info_text,None," ❌ Bug review canceled")
             return
+        pprint(updated_data)
         update_report = UI_BugReport.BugReportWindow(updated_data)
         if update_report.exec_():  
             self.write_info_data(info_text,None," ✅ Bug report generated successfully") 

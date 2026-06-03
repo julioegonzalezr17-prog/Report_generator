@@ -1,10 +1,10 @@
 # UTF-8
-# Last updated: 2026-05-28
+# Last updated: 2026-06-03
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(2, 8, 0, 0),
-    prodvers=(2, 8, 0, 0),
+    filevers=(2, 9, 0, 0),
+    prodvers=(2, 9, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -20,11 +20,11 @@ VSVersionInfo(
           [
             StringStruct('CompanyName', 'Ariston Group'),
             StringStruct('FileDescription', 'Generador automático de reportes'),
-            StringStruct('FileVersion', '02.08.00'),
+            StringStruct('FileVersion', '02.09.00'),
             StringStruct('InternalName', 'ReportGenerator'),
             StringStruct('OriginalFilename', 'ReportGenerator.exe'),
             StringStruct('ProductName', 'Report Generator'),
-            StringStruct('ProductVersion', '02.08.00'),
+            StringStruct('ProductVersion', '02.09.00'),
           ]
         )
       ]

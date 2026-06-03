@@ -3,7 +3,7 @@ import pandas as pd
 from PySide6.QtWidgets import (
     QMainWindow, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
     QScrollArea, QWidget, QCheckBox, QComboBox,
-    QLineEdit, QTextEdit, QFileDialog, QMessageBox
+    QLineEdit, QTextEdit, QFileDialog, QMessageBox, QSizePolicy
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
@@ -19,6 +19,8 @@ from reportlab.lib import colors
 import html
 import urllib.parse
 import math
+from reportlab.lib.units import mm
+from pathlib import Path
 
 
 class BugReportGenerator(QMainWindow):
@@ -65,7 +67,42 @@ class BugReportGenerator(QMainWindow):
         self.TDM_combo = QComboBox()
         self.TDM_combo.setMinimumWidth(200)
         self.TDM_combo.addItems(["TDM 4", "TDM 3"])
+
         
+        self.filter_tdm_combo = QComboBox()
+
+    
+        self.filter_tdm_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)       
+        self.filter_tdm_combo.currentIndexChanged.connect(self.apply_filters)
+        self.filter_tdm_combo.setMaximumWidth(140)
+
+
+        
+        self.filter_priority_combo = QComboBox()
+        self.filter_priority_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.filter_priority_combo.setMaximumWidth(140)
+        self.filter_priority_combo.currentIndexChanged.connect(self.apply_filters)
+
+
+        tdm_layout = QHBoxLayout()
+        tdm_layout.setSpacing(3)
+        tdm_layout.addWidget(QLabel("Filter TDM:"))
+        tdm_layout.addWidget(self.filter_tdm_combo)
+
+
+
+        priority_layout = QHBoxLayout()
+        priority_layout.setSpacing(3)
+        priority_layout.addWidget(QLabel("Priority:"))
+        priority_layout.addWidget(self.filter_priority_combo)
+
+
+        filter_layout = QHBoxLayout()
+        filter_layout.addStretch()
+        filter_layout.addLayout(tdm_layout)
+        filter_layout.addSpacing(15)
+        filter_layout.addLayout(priority_layout)
+
 
         combo_layout = QVBoxLayout()
         combo_layout.addWidget(self.sheet_combo, 2)
@@ -81,6 +118,12 @@ class BugReportGenerator(QMainWindow):
         # =========================
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
+
+        # =========================
+        # RELATED BUGS PANEL
+        # =========================
+        self.related_scroll = QScrollArea()
+        self.related_scroll.setWidgetResizable(True)
 
         # =========================
         # RIGHT PANEL (SUMMARY)
@@ -112,11 +155,18 @@ class BugReportGenerator(QMainWindow):
         # =========================
         container = QWidget()
         main = QVBoxLayout(container)
-
         main.addLayout(top_layout)
+        main.addLayout(filter_layout)
+
+        left_panel = QVBoxLayout()
+        left_panel.addWidget(QLabel("Bug List"))
+        left_panel.addWidget(self.scroll)
+
+        left_panel.addWidget(QLabel("Related Bugs"))
+        left_panel.addWidget(self.related_scroll)
 
         middle = QHBoxLayout()
-        middle.addWidget(self.scroll, 2)
+        middle.addLayout(left_panel, 2)
         middle.addLayout(right_layout, 3)
 
         main.addLayout(middle)
@@ -217,20 +267,30 @@ class BugReportGenerator(QMainWindow):
 
             df[col] = values
 
-        self.dataframe = df
+        self.full_df = df
+        self.filtered_df = df
+
+        self.populate_filters()
         self.build_bug_list()
+        self.filter_tdm_combo.setCurrentIndex(0)
+
+
 
     # =================================================
     # BUILD LIST
     # =================================================
     def build_bug_list(self):
 
+        if self.filtered_df is None:
+            return
+
         container = QWidget()
         layout = QVBoxLayout(container)
 
         self.bug_checkboxes.clear()
 
-        for _, row in self.dataframe.iterrows():
+        for _, row in self.filtered_df.iterrows():
+
             item = str(row.get("Item n", ""))
             issue = str(row.get("ISSUES", ""))
 
@@ -250,29 +310,44 @@ class BugReportGenerator(QMainWindow):
     # =================================================
     def update_preview(self):
 
-        if self.dataframe is None:
+        if self.full_df is None:
             return
+        
+        # reset style de todos
+        for cb in self.bug_checkboxes.values():
+            cb.setStyleSheet("")
 
         selected = [
             item for item, cb in self.bug_checkboxes.items()
             if cb.isChecked()
-        ]
-
+        ]      
+        
+        if hasattr(self, "hidden_selected"):
+            selected += list(self.hidden_selected)
+            
         if not selected:
             self.result_view.setText("No bugs selected")
+            self.build_related_list(set())
             return
 
         html_txt = ""
 
         for bug_id in selected:
             try:
-                row = self.dataframe[self.dataframe["Item n"] == int(bug_id)].iloc[0]
+                
+                row_df = self.full_df[self.full_df["Item n"] == int(bug_id)]
+
+                if row_df.empty:
+                    continue
+
+                row = row_df.iloc[0]
+
             except Exception:
                 continue
 
             html_txt += f"<b>BUG {bug_id}</b><br>"
 
-            for col in self.dataframe.columns:
+            for col in self.full_df.columns:
 
                 raw_value = row.get(col, "")
 
@@ -294,6 +369,20 @@ class BugReportGenerator(QMainWindow):
                 html_txt += f"<b>{col}:</b> {value}<br>"
 
             html_txt += "<br><hr><br>"
+
+        # =========================
+        # BUILD RELATED BUGS
+        # =========================
+        all_related = set()
+
+        for bug_id in selected:
+            ids = self.get_related_bug_ids(bug_id)
+            all_related.update(ids)
+
+        # remover los que ya están seleccionados
+        all_related = all_related - set(selected)
+
+        self.build_related_list(all_related)
 
         self.result_view.setHtml(html_txt)
 
@@ -328,7 +417,7 @@ class BugReportGenerator(QMainWindow):
         for bug_id in selected:
 
             try:
-                row = self.dataframe[self.dataframe["Item n"] == int(bug_id)].iloc[0]
+                row = self.full_df[self.full_df["Item n"] == int(bug_id)].iloc[0]
             except Exception:
                 continue
 
@@ -337,7 +426,7 @@ class BugReportGenerator(QMainWindow):
 
             table_data = []
 
-            for col in self.dataframe.columns:
+            for col in self.full_df.columns:
 
                 raw_value = row.get(col, "")
                 value = ""
@@ -406,7 +495,11 @@ class BugReportGenerator(QMainWindow):
             content.append(table)
             content.append(Spacer(1, 20))
 
-        doc.build(content)
+        doc.build(
+            content,
+            onFirstPage=self.draw_logo,
+            onLaterPages=self.draw_logo
+        )
 
         QMessageBox.information(self, "Done", "PDF generated successfully ✅")
 
@@ -467,3 +560,166 @@ class BugReportGenerator(QMainWindow):
             data.append(row_data)
 
         return data
+
+    def draw_logo(self, canvas, doc):
+        file_path = os.path.dirname(__file__)
+        folder_path = Path(file_path).parent
+        logo_path = folder_path / "iconos" / "Ariston_logo.png"
+        width = 100  # ancho en puntos (ajusta)
+        height = 100
+
+        x = doc.pagesize[0] - width - 80  # derecha
+        y = doc.pagesize[1] - height  # arriba
+
+        canvas.drawImage(logo_path, x, y, width=width, height=height, preserveAspectRatio=True)
+
+    def populate_filters(self):
+
+        df = self.full_df
+
+        # ✅ EVITAR triggers automáticos
+        self.filter_tdm_combo.blockSignals(True)
+        self.filter_priority_combo.blockSignals(True)
+
+        # PRIORITY
+        if "Priority" in df.columns:
+            priorities = sorted(df["Priority"].dropna().astype(str).unique())
+        else:
+            priorities = []
+
+        self.filter_priority_combo.clear()
+        self.filter_priority_combo.addItem("All")
+
+        for p in priorities:
+            self.filter_priority_combo.addItem(p)
+
+        # 🟦 TDM
+        if "TDM version" in df.columns:
+            tdm_values = sorted(df["TDM version"].dropna().astype(str).unique())
+        else:
+            tdm_values = []
+
+        self.filter_tdm_combo.clear()
+        self.filter_tdm_combo.addItem("All")
+
+        for v in tdm_values:
+            self.filter_tdm_combo.addItem(v)
+
+
+        # ✅ activar señales otra vez
+        self.filter_tdm_combo.blockSignals(False)
+        self.filter_priority_combo.blockSignals(False)
+
+
+    def apply_filters(self):
+
+        if self.full_df is None:
+            return
+
+        df = self.full_df.copy()
+
+        # 🔵 filtro TDM
+        tdm = self.filter_tdm_combo.currentText()
+        if tdm != "All" and "TDM version" in df.columns:
+            df = df[df["TDM version"].astype(str) == tdm]
+
+
+        # 🟣 filtro PRIORITY
+        priority = self.filter_priority_combo.currentText()
+        if priority != "All" and "Priority" in df.columns:
+            df = df[df["Priority"].astype(str) == priority]
+
+        self.filtered_df = df
+
+        # 🔄 reconstruir lista UI
+        self.result_view.clear()
+        self.build_bug_list()
+        self.build_related_list(set())
+
+    def get_related_bug_ids(self, bug_id):
+
+        related_ids = set()
+        related_ids.add(str(bug_id))
+
+        row = self.full_df[self.full_df["Item n"].astype(str) == str(bug_id)]
+
+        if row.empty:
+            return related_ids
+
+        col_name = None
+
+        for col in self.full_df.columns:
+            if "RELATED" in col.upper() and "BUG" in col.upper():
+                col_name = col
+                break
+
+        value = row.iloc[0].get(col_name, "") if col_name else ""
+
+        if pd.isna(value):
+            return related_ids
+
+        parts = str(value).split(",")
+
+        for p in parts:
+            p = p.strip()
+            if p:
+                related_ids.add(p)
+        
+        valid_ids = set(self.full_df["Item n"].astype(str))
+
+        related_ids = {rid for rid in related_ids if rid in valid_ids}
+        return related_ids
+    
+    def build_related_list(self, related_ids):
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        if not related_ids:
+            layout.addWidget(QLabel("No related bugs"))
+            self.related_scroll.setWidget(container)
+            return
+
+        for bug_id in sorted(related_ids):
+
+            row = self.full_df[
+                self.full_df["Item n"].astype(str) == str(bug_id)
+            ]
+
+            if row.empty:
+                continue
+
+            issue = str(row.iloc[0].get("ISSUES", ""))
+
+            label = QLabel(f"{bug_id} - {issue}")
+            label.setStyleSheet("color: blue; text-decoration: underline;")
+            label.setCursor(Qt.PointingHandCursor)
+
+            label.mousePressEvent = lambda e, bid=bug_id: self.select_bug(bid)
+
+            layout.addWidget(label)
+
+        layout.addStretch()
+        self.related_scroll.setWidget(container)
+
+    def select_bug(self, bug_id):
+
+        bug_id = str(bug_id)
+
+        # ✅ si está visible
+        if bug_id in self.bug_checkboxes:
+            cb = self.bug_checkboxes[bug_id]
+
+            if not cb.isChecked():
+                cb.setChecked(True)
+
+            cb.setStyleSheet("font-weight: bold; color: green;")
+
+        else:
+            # ✅ bug oculto por filtro → igual incluir en preview
+            if not hasattr(self, "hidden_selected"):
+                self.hidden_selected = set()
+
+            self.hidden_selected.add(bug_id)
+
+            self.update_preview()

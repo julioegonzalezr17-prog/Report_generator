@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QSizePolicy, QWidget, QMainWindow, QLabel, QLineE
                                 QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout, QMessageBox,
                                 QFileDialog, QComboBox, QTableView, QHeaderView, QFrame, QDialog,
                                 QScrollArea, QListWidget, QListWidgetItem)
-from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem, QPixmap
+from PySide6.QtGui import QIcon, QColor
 from PySide6.QtCore import Qt
 from ExcelStyler import ExcelStyler
 from step_engine import StepEngine
@@ -252,9 +252,9 @@ class StartWindow(QMainWindow):
 
             # Color según resultado
             if test["result"] == "PASS":
-                item.setBackground(Qt.green)
+                item.setBackground(QColor("#C6EFCE"))
             elif test["result"] == "FAIL":
-                item.setBackground(Qt.red)
+                item.setBackground(QColor("#FFC7CE"))
             else:
                 item.setBackground(Qt.lightGray)
 

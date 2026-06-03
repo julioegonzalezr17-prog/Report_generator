@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-05-28
+Last updated: 2026-06-03
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -8,9 +8,9 @@ This document tracks the current architecture of the Report Generator project an
 
 ## Current Version
 
-- `src/dictDataIntegration.py` defines `sw_version = "2.8.00"`
-- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.08.00`
-- The UI windows display `Version 2.8.00` in their titles
+- `src/dictDataIntegration.py` defines `sw_version = "2.9.00"`
+- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.00`
+- The UI windows display `Version 2.9.00` in their titles
 
 ## High-Level Architecture
 
@@ -140,9 +140,11 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
+- 2026-06-03: Updated version to 2.9.00. Synchronized `src/dictDataIntegration.py` and `version_info.txt` to reflect new patch release; documented additional test modules and standalone JSON/TDM helpers.
+
 - 2026-05-28: Updated version to 2.8.00. Added `UI_newRdP.py` for RDP report filling, improved RDP update and bug report workflows, and synchronized `version_info.txt` to `02.08.00`.
 
-## Test Coverage
+### Test Coverage
 
 The current `Test_code/` suite covers the main project subsystems, including:
 
@@ -156,6 +158,9 @@ The current `Test_code/` suite covers the main project subsystems, including:
 - `test_load_json_standalone.py`, `test_read-json_standalone.py`, `test_read_standalone.py` — standalone report loading paths
 - `test_version_sw_validation.py`, `test_version_validation_debug.py` — firmware/version validation logic
 - `test_copy_files.py`, `test_bug_review_window.py` — auxiliary file operations and bug review UI support
+- `test_motor_json.py` — motor JSON handling and normalization
+- `test_read_report_reult.py` — (typo-preserving) report result parsing validations
+- `validation_window.py` — validation window utilities used in tests
 
 ## Data Contracts (Key)
 
@@ -227,6 +232,8 @@ src/
 ├── lin_to_excel.py                 # LIN CSV → Excel helper
 ├── modbus_to_excel.py              # Modbus CSV → Excel helper
 ├── dictDataIntegration.py          # Shared config & constants
+├── dictDataStandalone.py           # Standalone-specific data/config helpers
+├── Read_json_standalone.py         # Standalone JSON report reader/parsers
 ├── fill_RDP_report.py              # Excel template filling & styling
 ├── Read_report_file.py             # Report parsing utilities
 ├── Load_configuration_test.py      # Test config XLSX loader
@@ -241,6 +248,28 @@ src/
 ├── resurces_rc.py                  # Qt compiled resources
 ├── iconos/                         # Application icons
 └── .vscode/                        # VSCode config
+
+## New/Updated Files (2026-06-03)
+
+- `dictDataStandalone.py`: Lista de `machines_standalone` específicas para flujos Standalone; usada por interfaces y loaders que soportan modos offline o JSON-driven. Contiene la lista de modelos y componentes auxiliares (pumps, fans) requerida para cargas de prueba standalone.
+
+- `Read_json_standalone.py`: Utilidad ligera para construir un diccionario de registros Modbus a partir de un JSON. Función principal `build_modbus_dict(json_path)` que transforma bloques con `slave_id`, `addresses` y `registers` a un dict indexado por `slave_ID_<id>` con metadatos (`name`, `is_bitmap`, `bit_labels`). Diseñado para alimentar parsers de logs o validadores offline.
+
+- `Test_code/test_motor_json.py`: Script de prueba que invoca `json_motor.create_test_config_json()` para convertir una hoja XLSX de configuración de pruebas en un JSON `test_config.json`. Sirve como ejemplo/validator para la generación automatizada de definiciones de test.
+
+- `Test_code/test_read_report_reult.py`: Herramienta de extracción para leer un workbook de Report Integration y construir una lista `tests` con esquema `{num,desc,notes,result}`. Detecta cabeceras en filas superiores y aplica reglas simples de normalización (`PASS`/`FAIL`). Útil para validar parsing de resultados de Excel.
+
+- `Test_code/validation_window.py`: Ventana de validación modal (`ValidationWindow`) usada por tests y UI para revisar `test_results` antes de actualizar plantillas. Presenta listas scrollables de fallos DGTO y FAULT con checkboxes, resume versiones detectadas y expone `get_updated_data()` que filtra sólo los fallos aceptados por el usuario.
+
+- `json_motor.py`: Generador/normalizador de configuraciones de test. Contiene `create_test_config_json()` que convierte hojas XLSX de configuración en un JSON estructurado (`tests`), normaliza nombres de columnas/steps y agrega los `steps` por defecto desde `dictDataIntegration` (`DEFAULT_TEST_STEPS_PACMAN5`, `DEFAULT_TEST_STEPS_1UP`). Útil para producción de `test_config.json` y para asegurar compatibilidad entre Excel y el `StepEngine`.
+
+- `step_engine.py`: Implementa `StepEngine`, que recibe una instancia de `ExcelStyler`, la configuración del test y ejecuta los pasos JSON (`steps`). Resuelve especificadores de columnas y valores (incluyendo la resolución de `Faults Expected` y búsquedas en `tdm_dict`), y traduce acciones JSON a llamadas a `ExcelStyler` (highlight, insert_column, populate_column, validate_version, plot, etc.). Documenta los tipos de resultados que puede producir (`Faults_Not_expected`, `plot_path`, etc.).
+
+- `ExcelStyler.py`: Biblioteca de utilidades para manipular y estilizar workbooks con `openpyxl`. Soporta: búsqueda/normalización de headers, resaltado de filas/columnas/celdas, inserción/append de columnas, población de columnas a partir de diccionarios TDM/LIN, formateo condicional, autosize, generación de gráficos en PNG (`plot_headers_from_excel`) y validación/normalización de valores (version parsing, temp/current conversions). Es el componente central usado por `StepEngine`.
+
+- `fill_RDP_report.py`: Función `update_excel_template()` para rellenar plantillas RDP: copia datos/test folders, escribe campos de header (respetando celdas combinadas), detecta inicio de tabla automáticamente, inserta filas de tests y aplica estilos (colores PASS/FAIL), protege/desprotege hoja y guarda el resultado. Incluye helpers `get_writable_cell`, `find_table_start_row` y `find_value_column_after_label` que manejan merged cells y enlaces.
+
+- `Test_code/test_fill_rdp.py`: Test de integración ligera que invoca `update_excel_template()` con un `header_data` simulado y una lista de `tests` (15 entradas). Valida la ruta de plantilla, copiado de data/report folders, y la correcta escritura de valores + colormapping PASS/FAIL en el Excel.
 ```
 
 ### Test Directory (Test_code/)
