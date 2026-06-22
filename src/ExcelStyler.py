@@ -11,8 +11,10 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, PatternFill, Font, Alignment, Side
 from openpyxl.formatting.rule import CellIsRule
 import pandas as pd
+from Read_report_file import normalize_header
 from dictDataIntegration import error_list_LIN, status_TDM
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,6 @@ class ExcelStyler:
         self.start_row = 3  # Assuming headers are on row 3, data starts from row 4
         self.tdm_dict = tdm_dict or {}
         self.initial_data = initial_data
-
 
     def find_header_from_column(self, col)->list:
         logger.info("find_header_from_column INPUT: %s", col)
@@ -776,9 +777,10 @@ class ExcelStyler:
         # Normalizar el nombre buscado
         def normalize_name(name):
             """Normalizar nombre: MAYÚSCULAS, quitar espacios, guiones, underscores y caracteres no alfanuméricos"""
-            import re
+            name = str(name)
+            name = re.sub(r'\(.*?\)', '', name)
             # Convertir a string, quitar caracteres no alfanuméricos, convertir a mayúsculas
-            normalized = re.sub(r'[^a-zA-Z0-9]', '', str(name).strip()).upper()
+            normalized = re.sub(r'[^a-zA-Z0-9]', '', name).upper()
             return normalized
         
         target_normalized = normalize_name(header_name)
@@ -1107,9 +1109,15 @@ class ExcelStyler:
 
         for row in range(self.start_row + 1, self.ws.max_row + 1):
             cell = self.ws.cell(row=row, column=col_idx)
-
+            val = cell.value
+            if val is None:
+                continue    
+            if isinstance(val, str):
+                val = val.strip()
+                if val == "":
+                    continue
             try:
-                value = float(cell.value)
+                value = float(val)
             except (TypeError, ValueError):
                 continue
 

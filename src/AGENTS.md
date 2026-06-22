@@ -8,9 +8,9 @@ This document tracks the current architecture of the Report Generator project an
 
 ## Current Version
 
-- `src/dictDataIntegration.py` defines `sw_version = "2.9.00"`
-- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.00`
-- The UI windows display `Version 2.9.00` in their titles
+- `src/dictDataIntegration.py` defines `sw_version = "2.9.01"`
+- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.01`
+- The UI windows display `Version 2.9.01` in their titles
 
 ## High-Level Architecture
 
@@ -140,7 +140,7 @@ SelectionWindow (UI_selection.py)
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
 
-- 2026-06-03: Updated version to 2.9.00. Synchronized `src/dictDataIntegration.py` and `version_info.txt` to reflect new patch release; documented additional test modules and standalone JSON/TDM helpers.
+- 2026-06-03: Updated version to 2.9.01. Synchronized `src/dictDataIntegration.py` and `version_info.txt` to reflect new patch release; documented additional test modules and standalone JSON/TDM helpers.
 
 - 2026-05-28: Updated version to 2.8.00. Added `UI_newRdP.py` for RDP report filling, improved RDP update and bug report workflows, and synchronized `version_info.txt` to `02.08.00`.
 

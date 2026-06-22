@@ -261,9 +261,9 @@ class StepEngine:
             # -----------------------------
             # 14. Insert current values correct units to plot
             # -----------------------------     
-            elif action == "insert_current_colmun":
+            elif action == "insert_current_column":
                 column = step["column"]
-                self.styler.insert_current_colmun(column)  
+                self.styler.insert_current_column(column)  
             # -----------------------------
             # 15. Fill fault names based on fault codes using tdm dictionary
             #     This is a custom action that populates a new column "TDM_Fault_Name"

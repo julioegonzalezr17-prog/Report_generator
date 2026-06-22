@@ -13,7 +13,7 @@ inverter = {
                     ]
             } 
 header_row_default = 5      # Default header row for TDM error-fault XLSX files (1-based index)
-sw_version = "2.9.00"
+sw_version = "2.9.01"
 
 header_default_table = { 
                         "Pacman 5": [
@@ -586,7 +586,7 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "column": "TDM_STATUS_name"
                                 },
                                 {
-                                    "action": "insert_current_colmun",
+                                    "action": "insert_current_column",
                                     "column": "Compressor Phase Current"
                                 },
                                 {
@@ -650,11 +650,11 @@ DEFAULT_TEST_STEPS_PACMAN5 = {1: [{
                                     "column": "TDM_STATUS_name"
                                 },
                                 {
-                                    "action": "insert_temp_colmun",
+                                    "action": "insert_temp_column",
                                     "column": "HEATSINK_TEMPERATURE"
                                 },                                
                                 {
-                                    "action": "insert_current_colmun",
+                                    "action": "insert_current_column",
                                     "column": "Compressor Phase Current"
                                 },
                                 {
@@ -1255,12 +1255,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "validate_version",
@@ -1330,12 +1331,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1399,12 +1401,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1466,12 +1469,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1535,12 +1539,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
+                                "action": "insert_column",
                                 "column": "Lin_fault_name",
+                                "value": "LIN_PUMP_ERROR_CODE_ID"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1599,12 +1604,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1662,12 +1668,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1726,15 +1733,16 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
-                                "action": "insert_current_colmun",
+                                "action": "insert_current_column",
                                 "column": "Compressor Phase Current"
                             },
                             {
@@ -1799,19 +1807,20 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
-                                "action": "insert_temp_colmun",
+                                "action": "insert_temp_column",
                                 "column": "HEATSINK_TEMPERATURE"
                             },                            
                             {
-                                "action": "insert_current_colmun",
+                                "action": "insert_current_column",
                                 "column": "Compressor Phase Current"
                             },
                             {
@@ -1881,12 +1890,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -1950,12 +1960,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2019,12 +2030,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2083,12 +2095,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2151,12 +2164,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2219,12 +2233,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2286,12 +2301,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2363,12 +2379,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2427,12 +2444,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2492,12 +2510,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2567,12 +2586,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2631,12 +2651,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2706,12 +2727,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2767,12 +2789,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2834,12 +2857,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2897,12 +2921,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -2959,12 +2984,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3028,12 +3054,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3095,12 +3122,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3176,12 +3204,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3239,12 +3268,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3311,12 +3341,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3380,12 +3411,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
@@ -3443,12 +3475,13 @@ DEFAULT_TEST_STEPS_1UP = {1: [{
                                 "column": "TDM_STATUS_name"
                             },
                             {   
-                                "action": "append_column",
-                                "column": "Lin_fault_name",
+                                "action": "insert_column",
+                                "column": "LIN_PUMP_ERROR_CODE_ID",
+                                "value": "Lin_fault_name"
                             },
                             {   
                                 "action": "populate_lin_fault",
-                                "column": "Lin_fault_name",
+                                "column": "Lin_fault_name"
                             },
                             {
                                 "action": "highlight_event",
