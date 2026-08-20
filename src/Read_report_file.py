@@ -173,7 +173,7 @@ def modify_excel_with_headers(
     if not target_row:
         wb.Close(SaveChanges=False)
         excel.Quit()
-        raise print(f"Test N° '{test_num}' not found in any table.")
+        raise logger.info(f"Test N° '{test_num}' not found in any table.")
 
     # 3) For each header in search_header, find its column and write
     last_col = ws.UsedRange.Columns.Count
@@ -307,8 +307,11 @@ def modify_excel_with_headers(
             continue        
         LOG_HEADERS = {
             normalize_header("Modbus Log"),
-            normalize_header("TDM log"),
+            normalize_header("TDM Log"),
             normalize_header("Lin Log"),
+            normalize_header("Log Modbus"),
+            normalize_header("Log TDM"),
+            normalize_header("Log Lin")            
         }
         if normalize_header(header_name) in LOG_HEADERS:
             

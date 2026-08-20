@@ -13,7 +13,7 @@ inverter = {
                     ]
             } 
 header_row_default = 5      # Default header row for TDM error-fault XLSX files (1-based index)
-sw_version = "2.9.01"
+sw_version = "2.9.05"
 
 header_default_table = { 
                         "Pacman 5": [

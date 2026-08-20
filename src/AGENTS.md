@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-06-03
+Last updated: 2026-08-20
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -8,9 +8,10 @@ This document tracks the current architecture of the Report Generator project an
 
 ## Current Version
 
-- `src/dictDataIntegration.py` defines `sw_version = "2.9.01"`
-- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.01`
-- The UI windows display `Version 2.9.01` in their titles
+- `src/dictDataIntegration.py` defines `sw_version = "2.9.05"`
+- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.05`
+- The UI windows display `Version 2.9.05` in their titles
+- The project currently includes validation gating, RDP report generation/update, bug report workflows, standalone and integration test handling, and Excel conversion utilities.
 
 ## High-Level Architecture
 
@@ -35,7 +36,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.8.00"`)
+  - Software version (`sw_version = "2.9.05"`)
   - Test types: `Standalone test`, `Integration test`, `RdP report`, `Bug report`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -139,6 +140,8 @@ SelectionWindow (UI_selection.py)
 | **ExcelStyler.py** | Low-level Excel editing (highlight, format, validate) |
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
+
+- 2026-08-20: Project alignment update to version 2.9.05. Synchronized `dictDataIntegration.py`, `version_info.txt`, and this AGENTS guide to match the current codebase, including the validation gate before RDP update, bug review/report workflows, standalone and integration flows, and Excel conversion helpers.
 
 - 2026-06-03: Updated version to 2.9.01. Synchronized `src/dictDataIntegration.py` and `version_info.txt` to reflect new patch release; documented additional test modules and standalone JSON/TDM helpers.
 

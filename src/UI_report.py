@@ -1532,7 +1532,7 @@ class AnalysisWindow(QMainWindow):
         if path_lin is not None:
             path_lin_text = lin_to_excel.lin_csv_to_excel(str(path_lin.text().strip()))
         delimiter = Read_TDM_report.detect_csv_delimiter(path_line.text().strip())
-        header_cust, report_data = Read_TDM_report.read_custom_csv(path_line.text().strip(), delimiter)
+        header_cust, report_data, normalized_data = Read_TDM_report.read_custom_csv(path_line.text().strip(), delimiter)
         if report_data is None or header_cust is None: 
             self.write_info_data(info_text,[],"ERROR: File format is invalid.")           
             return ["ERROR: File format is invalid."]
@@ -1547,7 +1547,7 @@ class AnalysisWindow(QMainWindow):
         # revisar llave antes de llamar todo
 
         if "DGTO" in self.Analysis[str(test_und_eva)]:
-            result_DGTO_validation = self.Analysis[str(test_und_eva)]["DGTO"]({"report": report_data,
+            result_DGTO_validation = self.Analysis[str(test_und_eva)]["DGTO"]({"report": normalized_data,
                                                                             "tdm": tdm_config_data})
             test_result["DGTO_validation"]  = result_DGTO_validation
             self.write_info_data(info_text,result_DGTO_validation," DGTO Validation.")
@@ -1583,15 +1583,15 @@ class AnalysisWindow(QMainWindow):
         logger.debug("Test validation results: %s", data_to_report)
 
 
-
+        print("Data to report model:", self.user_data["machine_model"])
         if self.user_data["machine_model"] == "Pacman 5":
-            data_print_report = {"TDM log" : test_excel,
+            data_print_report = {"TDM Log" : test_excel,
                                 "Modbus Log": path_mod_text,
                                 "Analysis": data_to_report,
                                 "Supporting Data": plot_path}        
         else:
-            data_print_report = {"TDM log" : test_excel,
-                                "Log LIN": path_lin_text,
+            data_print_report = {"TDM Log" : test_excel,
+                                "Lin Log": path_lin_text,
                                 "Modbus Log": path_mod_text,
                                 "Analysis": data_to_report,
                                 "Supporting Data": plot_path}

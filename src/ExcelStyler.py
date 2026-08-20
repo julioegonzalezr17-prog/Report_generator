@@ -140,7 +140,7 @@ class ExcelStyler:
                 else:
                     missing.append(header)
             if missing:
-                print(f"Header(s) not found: {missing}")                
+                logger.info(f"Header(s) not found: {missing}")                
             cols = tuple(resolved)
         else:
             if isinstance(col, (int, str)):
@@ -172,7 +172,8 @@ class ExcelStyler:
         for col_ex_name, new_col in zip(existing_header,header):
             position = self.cell_letter_to_number(self.find_header_column(col_ex_name))
             if position is None:
-                raise ValueError(f"Header '{col_ex_name}' not found")
+                logger.info(f"Header '{col_ex_name}' not found")
+                return
             self.ws.insert_cols(position)
 
             # Write header
@@ -216,7 +217,6 @@ class ExcelStyler:
                 fault_names.append("No fault")
             else:
                 fault_names.append("Code Fault not found in TDM")
-        # print(f"Fault names populated: {fault_names}")  
         logger.info("populate_fault_names OUTPUT: OK")      
         return fault_names
     
@@ -285,9 +285,12 @@ class ExcelStyler:
         """
         logger.info("populate_column: %s",header)
         col = self.cell_letter_to_number(self.find_header_column(header))
-
-        for r, val in enumerate(start=self.start_row + 1, iterable=values):
+        if col is None:
+            logger.info(f"Header '{header}' not found")
+            return
+        for r, val in enumerate(start=self.start_row + 1, iterable=values):            
             self.ws.cell(row=r, column=col, value=val)
+
         logger.info("populate_column: OK")
     
     # --------------------------------------------------------------
@@ -340,7 +343,8 @@ class ExcelStyler:
             header = [header]
         for col_ex_name, new_col in zip(col,header):
             if col_ex_name is None:
-                raise ValueError(f"Header '{col_ex_name}' not found")
+                logger.info(f"Header '{col_ex_name}' not found")
+                return
             self.ws.insert_cols(col_ex_name)
 
             # Write header
@@ -531,7 +535,6 @@ class ExcelStyler:
         maxrow = self.ws.max_row
         for col_letter in col_letters:
             for target_norm in normalized_seq:
-                # print("data: ", target_norm)
                 for row in range(4, maxrow):  # Go up to maxrow-1 to check next row
                     cell = self.ws[f"{col_letter}{row}"]
                     val = cell.value
@@ -778,7 +781,7 @@ class ExcelStyler:
         def normalize_name(name):
             """Normalizar nombre: MAYÚSCULAS, quitar espacios, guiones, underscores y caracteres no alfanuméricos"""
             name = str(name)
-            name = re.sub(r'\(.*?\)', '', name)
+            name = re.sub(r'\s*\([^)]*\)\s*$', '', name)
             # Convertir a string, quitar caracteres no alfanuméricos, convertir a mayúsculas
             normalized = re.sub(r'[^a-zA-Z0-9]', '', name).upper()
             return normalized
@@ -982,23 +985,23 @@ class ExcelStyler:
         logger.info("plot_headers_from_excel INPUT: %s", str(out_path.resolve()))
         return str(out_path.resolve())
     
-    def insert_temp_colmun(self, header: str):
-        logger.info("insert_temp_colmun INPUT: %s", header)
+    def insert_temp_column(self, header: str):
+        logger.info("insert_temp_column INPUT: %s", header)
         data = self.temp_convertion(header)
         if data is not None:
             new_header = header + "_T°C"
             self.insert_column(header, new_header)
             self.populate_column(new_header, data)
-        logger.info("insert_temp_colmun OK")
+        logger.info("insert_temp_column OK")
         return
-    def insert_current_colmun(self, header: str):
-        logger.info("insert_current_colmun INPUT: %s", header)
+    def insert_current_column(self, header: str):
+        logger.info("insert_current_column INPUT: %s", header)
         data = self.scale_current(header)
         if data is not None:
             new_header = header + "_[A]"
             self.insert_column(header, new_header)
             self.populate_column(new_header, data)
-        logger.info("insert_current_colmun OK")
+        logger.info("insert_current_column OK")
         return
     
     def temp_convertion(self, header: str) ->list:

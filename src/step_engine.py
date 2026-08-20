@@ -220,9 +220,9 @@ class StepEngine:
             # -----------------------------
             # 9. insert_temperature
             # -----------------------------
-            elif action == "insert_temp_colmun":
+            elif action == "insert_temp_column":
                 column = step["column"]
-                self.styler.insert_temp_colmun(column)
+                self.styler.insert_temp_column(column)
             # -----------------------------
             # 10. insert_plot analysis
             # -----------------------------

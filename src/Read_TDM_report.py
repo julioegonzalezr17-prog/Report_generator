@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Tuple
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -36,73 +37,94 @@ def detect_csv_delimiter(csv_path: str) -> str:
         logger.exception("ERROR analizing: %s", csv_path)
         raise
 
-def read_custom_csv(csv_path: str, separator: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def read_custom_csv(csv_path: str, separator: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Read a CSV file with a custom structure.
-
-    Format expected:
-        - Line 0: metadata/header line (raw, not used as data)
-        - Line 1: metadata/header line (raw, not used as data)
-        - Line 2: actual column names
-        - Line 3: blank/separator (skipped)
-        - Line 4+: data rows
-
-    Parameters:
-        csv_path: path to the CSV file
-        separator: field delimiter (default: ";")
+    Read a CSV file with a custom structure and generate both original
+    and normalized headers.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]:
-            - custom_header: first two rows as a DataFrame (for reference)
-            - data_frame: the main data starting from line 4, with proper column names from line 2
+        custom_header
+        data_frame              -> original column names
+        normalized_data_frame   -> headers without trailing "(...)"
     """
+
     logger.info("Reading data test: %s", csv_path)
+
     try:
-        # Read the file line-by-line to handle the exact structure
+        def normalize_header(header: str) -> str:
+            """
+            Examples:
+            HP Compressor Model RD
+                -> HP Compressor Model RD
+
+            HP Compressor Model RD (4-15-3-29)
+                -> HP Compressor Model RD
+            """
+            header = str(header).strip()
+
+            # Remove trailing parenthesized content
+            header = re.sub(r'\s*\([^)]*\)\s*$', '', header)
+
+            return header.strip()
+
+        # Read file
         lines = []
         with open(csv_path, 'r', encoding='utf-8') as f:
             for line in f:
                 lines.append(line.rstrip('\n\r'))
 
-        # Extract metadata rows (lines 0-1) as 2 rows, 1 column
+        # Metadata
         custom_header = pd.DataFrame({
             'Metadata': [lines[0], lines[1]]
         })
 
-        # Extract column names from line 2
+        # Original column names
         column_names = lines[2].split(separator)
 
-        # Extract data from line 4 onwards (skip blank line 3)
+        # Data rows
         data_rows = []
         for line in lines[4:]:
-            if line.strip() and not line.strip().startswith("#ENDACQUISITION#"):  # Only process non-empty lines and exclude #ENDACQUISITION#
-                row = line.split(separator)
-                data_rows.append(row)
+            if line.strip() and not line.strip().startswith("#ENDACQUISITION#"):
+                data_rows.append(line.split(separator))
 
-        # Create data frame
+        # Original dataframe
         data_frame = pd.DataFrame(data_rows)
+
         if not data_frame.empty:
-            # Assign column names, handling extra columns if any
+
             if data_frame.shape[1] > len(column_names):
-                column_names.extend([f"Column_{i}" for i in range(len(column_names), data_frame.shape[1])])
+                column_names.extend(
+                    [f"Column_{i}" for i in range(len(column_names), data_frame.shape[1])]
+                )
+
             data_frame.columns = column_names[:data_frame.shape[1]]
-            
-            # Keep first two columns as strings (for time data)
-            # Convert remaining columns to numeric
+
+            # Numeric conversion
             for i, col in enumerate(data_frame.columns):
-                if i >= 2:  # Skip first two columns
+                if i >= 2:
                     try:
                         data_frame[col] = pd.to_numeric(data_frame[col], errors='coerce')
                     except Exception:
-                        pass  # Keep as string if conversion fails
-            
+                        pass
+
             data_frame.reset_index(drop=True, inplace=True)
 
-        logger.debug("File read succesfully data extracted!!!!!")
-        return custom_header, data_frame
-    except Exception as e:
-        logger.exception("ERROR aloading data: %s", csv_path)
-        return None, None
+        # Create dataframe with normalized headers
+        normalized_data_frame = data_frame.copy()
+
+        if not normalized_data_frame.empty:
+            normalized_data_frame.columns = [
+                normalize_header(col)
+                for col in normalized_data_frame.columns
+            ]
+
+        logger.debug("File read successfully")
+
+        return custom_header, data_frame, normalized_data_frame
+
+    except Exception:
+        logger.exception("ERROR loading data: %s", csv_path)
+        return None, None, None
 
 
 def save_to_excel(excel_path: str, custom_header: pd.DataFrame, data_frame: pd.DataFrame) -> None:
