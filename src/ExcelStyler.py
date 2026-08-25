@@ -865,10 +865,10 @@ class ExcelStyler:
             # ---- Convert decimal to HEX and format ----
             if h == "PB DSP FW2":
                 formatted = f"{found_number}"
-            else: 
+            else:
                 hex_str = f"{found_number:04X}"  # always 4 digits
-                high = hex_str[:2]
-                low = hex_str[2:]
+                high = f"{int(hex_str[0],16)*16 + int(hex_str[1],16)}"                               
+                low = f"{int(hex_str[2],16)*16 + int(hex_str[3],16)}" 
                 formatted = f"V{high}_T{low}"
             results[h] = formatted
             self.insert_column(h,h,formatted)  

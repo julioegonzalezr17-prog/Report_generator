@@ -13,12 +13,12 @@ from PySide6.QtCore import qInstallMessageHandler
 # pyside6-rcc resurces.qrc -o resurces_rc.py
 
 
-# git checkout version-2.0
+# git checkout v2-development
 # git add .
 # git commit -m "Automatic RDP working"
 # git tag -a 2.2.0 -m "automatic rdp working"
-# git push origin version-2.0
-# git push origin 2.2.0
+# git push origin v2-development
+# git push origin tag 2.2.0
 
 
 def main():

@@ -1,6 +1,6 @@
 ﻿# AGENTS.md
 
-Last updated: 2026-08-20
+Last updated: 2026-08-25
 Project root scanned: `Report_generator`
 
 ## Purpose
@@ -8,9 +8,9 @@ This document tracks the current architecture of the Report Generator project an
 
 ## Current Version
 
-- `src/dictDataIntegration.py` defines `sw_version = "2.9.05"`
-- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.05`
-- The UI windows display `Version 2.9.05` in their titles
+- `src/dictDataIntegration.py` defines `sw_version = "2.9.06"`
+- `version_info.txt` embeds `FileVersion` and `ProductVersion` as `02.09.06`
+- The UI windows display `Version 2.9.06` in their titles
 - The project currently includes validation gating, RDP report generation/update, bug report workflows, standalone and integration test handling, and Excel conversion utilities.
 
 ## High-Level Architecture
@@ -36,7 +36,7 @@ Multi-window interface orchestration:
 
 ### Configuration & Data Integration
 - **`dictDataIntegration.py`** - Centralized config data:
-  - Software version (`sw_version = "2.9.05"`)
+  - Software version (`sw_version = "2.9.06"`)
   - Test types: `Standalone test`, `Integration test`, `RdP report`, `Bug report`
   - Inverter models: `Pacman 5`, `1 UP`
   - Default table headers (machine-specific)
@@ -140,6 +140,8 @@ SelectionWindow (UI_selection.py)
 | **ExcelStyler.py** | Low-level Excel editing (highlight, format, validate) |
 | **magic_logger.py** | Per-run logging with rotation |
 ### Recent changes
+
+- 2026-08-25: Synchronized the project guide and executable metadata with the current software version 2.9.06.
 
 - 2026-08-20: Project alignment update to version 2.9.05. Synchronized `dictDataIntegration.py`, `version_info.txt`, and this AGENTS guide to match the current codebase, including the validation gate before RDP update, bug review/report workflows, standalone and integration flows, and Excel conversion helpers.
 
@@ -329,7 +331,7 @@ magic_logger.py (centralized logging)
 
 | Constant | Values | Purpose |
 |----------|--------|---------|
-| `sw_version` | `"2.8.00"` | Application version |
+| `sw_version` | `"2.9.06"` | Application version |
 | `test_type` | `['Standalone test', 'Integration test', 'RdP report', 'Bug report']` | Test mode selection |
 | `inverter` | `{"Pacman 5": [...], "1 UP": [...]}` | Inverter models & variants |
 | `header_row_default` | `5` | Default TDM XLSX header row |

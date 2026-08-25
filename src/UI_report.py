@@ -1258,12 +1258,12 @@ class AnalysisWindow(QMainWindow):
             return None
 
         def get_fault_value(key: str):
-            fault_data = versions_read.get("fault_data", {}) if isinstance(versions_read, dict) else {}
-            if key in fault_data:
+            fault_data = versions_read.get("fault_data", {}) if isinstance(versions_read, dict) else {}          
+            if key in fault_data:                
                 return fault_data[key]
             normalized_target = self.normalize_name(key)
             for stored_key, value in fault_data.items():
-                if self.normalize_name(stored_key) == normalized_target:
+                if self.normalize_name(stored_key) == normalized_target:                    
                     return value
             return None
         
@@ -1392,7 +1392,13 @@ class AnalysisWindow(QMainWindow):
             if "DSPMAINVERSIONECOKING" in version_data_norm and "PBDSPFW2" in version_data_norm:
                 raw_dsp = get_fault_value("DSPMAINVERSIONECOKING")
                 raw_pb = get_fault_value("PBDSPFW2")
-                if raw_dsp is None or raw_pb is None:
+                if raw_dsp is None:
+                    logger.info("Value for DSPMAINVERSIONECOKING is None")
+                    dsp_check = False
+                else:
+                    logger.info("Value for DSPMAINVERSIONECOKING is: %s", raw_dsp)
+                if raw_pb is None:
+                    logger.info("Value for PBDSPFW2 is None")
                     dsp_check = False
                 else:
                     x, y = extract_v_t(raw_dsp)
